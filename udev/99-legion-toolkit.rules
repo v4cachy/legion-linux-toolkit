@@ -1,0 +1,17 @@
+# /etc/udev/rules.d/99-legion-toolkit.rules
+# Triggers udev-trigger.sh when Fn+Q changes the platform_profile
+# Hardware: Lenovo Legion 5 15ACH6H — ideapad_acpi at VPC2004:00
+
+ACTION=="change", SUBSYSTEM=="platform", KERNEL=="VPC2004:00", \
+    RUN+="/usr/lib/legion-toolkit/udev-trigger.sh"
+
+ACTION=="change", SUBSYSTEM=="platform", DRIVER=="ideapad_acpi", \
+    RUN+="/usr/lib/legion-toolkit/udev-trigger.sh"
+
+# ── Keyboard RGB (ITE Tech USB HID controller — 4-zone Legion keyboard) ────────
+# Allows non-root users to send USB control transfers for RGB colour control.
+# Required for KeyboardPage RGB presets in legion-gui.py (uses python-pyusb).
+SUBSYSTEM=="usb", ATTR{idVendor}=="048d", ATTR{idProduct}=="c965", MODE="0666"
+SUBSYSTEM=="usb", ATTR{idVendor}=="048d", ATTR{idProduct}=="c975", MODE="0666"
+SUBSYSTEM=="usb", ATTR{idVendor}=="048d", ATTR{idProduct}=="c985", MODE="0666"
+SUBSYSTEM=="usb", ATTR{idVendor}=="048d", ATTR{idProduct}=="c995", MODE="0666"
