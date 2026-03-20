@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+# =============================================================
+# legion-ctl — Legion Linux Toolkit CLI
+# =============================================================
+# Usage examples:
+#   legion-ctl quiet
+#   legion-ctl balanced
+#   legion-ctl balanced-performance
+#   legion-ctl performance
+#   legion-ctl status
+#   legion-ctl conservation on
+#   legion-ctl conservation off
+#   legion-ctl camera on|off
+#   legion-ctl fn-lock on|off
+#   legion-ctl usb-charging on|off
+# =============================================================
+
+if [[ $EUID -ne 0 ]]; then
+    exec sudo "$0" "$@"
+fi
+
+DAEMON="/usr/lib/legion-toolkit/legion-daemon.py"
+
+case "${1:-}" in
+    quiet|balanced|balanced-performance|performance|status)
+        exec python3 "$DAEMON" "$1"
+        ;;
+    conservation)
+        exec python3 "$DAEMON" "conservation-${2:-on}"
+        ;;
+    camera)
+        exec python3 "$DAEMON" "camera-${2:-on}"
+        ;;
+    fn-lock)
+        exec python3 "$DAEMON" "fn-lock-${2:-on}"
+        ;;
+    usb-charging)
+        exec python3 "$DAEMON" "usb-charging-${2:-on}"
+        ;;
+    rapid-charge)
+        exec python3 "$DAEMON" "rapid-charge-${2:-on}"
+        ;;
+    "")
+        echo "Legion Linux Toolkit — CLI"
+        echo ""
+        echo "Usage: legion-ctl <command>"
+        echo ""
+        echo "  Profiles:"
+        echo "    quiet                  Silent, 15W, boost off"
+        echo "    balanced               35W, boost on, auto fan"
+        echo "    balanced-performance   45W, boost on"
+        echo "    performance            54W, full speed"
+        echo ""
+        echo "  Settings:"
+        echo "    status                 Show current state"
+        echo "    conservation on|off    Battery charge cap (~60%)"
+        echo "    camera on|off          Camera power"
+        echo "    fn-lock on|off         Fn key lock"
+        echo "    usb-charging on|off    USB power while off"
+        echo "    rapid-charge on|off    Rapid charging (faster but more heat)"
+        ;;
+    *)
+        echo "Unknown command: $1"
+        echo "Run 'legion-ctl' with no arguments for help."
+        exit 1
+        ;;
+esac
