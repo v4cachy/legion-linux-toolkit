@@ -1,0 +1,22 @@
+[Unit]
+Description=Legion Linux Toolkit Daemon
+Documentation=https://github.com/v4cachy/Legion-Linux-Toolkit-Beta
+After=multi-user.target
+After=ideapad_acpi.service
+# Wants LLL if installed, but not required
+Wants=lenovolegionlinux.service
+
+[Service]
+Type=simple
+ExecStart=/usr/lib/legion-toolkit/legion-daemon.py
+Restart=on-failure
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=legion-toolkit
+
+# Needs root for sysfs writes
+User=root
+
+[Install]
+WantedBy=multi-user.target
