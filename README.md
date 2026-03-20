@@ -4,7 +4,7 @@
   <img src="logo.png" width="80" alt="Legion Logo"/>
 </p>
 
-> **Beta v0.6.0** — A power management and hardware control dashboard for Lenovo Legion laptops on Linux.
+> **Beta v0.6.1** — A power management and hardware control dashboard for Lenovo Legion laptops on Linux.
 
 ---
 
