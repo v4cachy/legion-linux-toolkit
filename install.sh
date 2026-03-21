@@ -42,7 +42,7 @@ command -v envycontrol &>/dev/null  \
 command -v legionaura &>/dev/null   \
     || MISSING_INFO+=("legionaura        — keyboard RGB colour control")
 lsmod 2>/dev/null | grep -q "lenovo_legion" \
-    || MISSING_INFO+=("lenovo-legion-linux-dkms  — fan RPM, hardware toggles, sysfs paths")
+    || MISSING_INFO+=("lenovolegionlinux  — fan RPM, hardware toggles, sysfs paths")
 
 # Install missing pacman packages
 if [[ ${#MISSING_PACMAN[@]} -gt 0 ]]; then
@@ -52,14 +52,46 @@ if [[ ${#MISSING_PACMAN[@]} -gt 0 ]]; then
 fi
 ok "Core packages ready"
 
-# Report optional
-if [[ ${#MISSING_INFO[@]} -gt 0 ]]; then
-    echo ""
-    warn "Optional packages not found — install for full features:"
-    for pkg in "${MISSING_INFO[@]}"; do
-        echo -e "     ${YELLOW}•${NC}  $pkg"
-    done
-    echo -e "     ${CYAN}yay -S envycontrol legionaura lenovo-legion-linux-dkms${NC}"
+# ── Install optional packages ─────────────────────────────────────────────────
+echo ""
+echo -e "${BOLD}  Installing optional packages…${NC}"
+
+# lenovo-legion-linux via pacman
+if ! lsmod 2>/dev/null | grep -q "lenovo_legion"; then
+    echo -e "  ${CYAN}→${NC}  Installing lenovolegionlinux via pacman…"
+    pacman -S --noconfirm --needed lenovolegionlinux lenovolegionlinux-dkms 2>/dev/null \
+        && ok "lenovolegionlinux + lenovolegionlinux-dkms installed" \
+        || warn "lenovolegionlinux not found in repos — may need CachyOS repo enabled"
+else
+    ok "lenovo_legion module already loaded"
+fi
+
+# envycontrol via paru
+if ! command -v envycontrol &>/dev/null; then
+    if command -v paru &>/dev/null; then
+        echo -e "  ${CYAN}→${NC}  Installing envycontrol via paru…"
+        sudo -u "${SUDO_USER:-$USER}" paru -S --noconfirm envycontrol 2>/dev/null \
+            && ok "envycontrol installed" \
+            || warn "envycontrol install failed — run manually: paru -S envycontrol"
+    else
+        warn "paru not found — install envycontrol manually: paru -S envycontrol"
+    fi
+else
+    ok "envycontrol already installed"
+fi
+
+# legionaura via yay
+if ! command -v legionaura &>/dev/null; then
+    if command -v yay &>/dev/null; then
+        echo -e "  ${CYAN}→${NC}  Installing legionaura via yay…"
+        sudo -u "${SUDO_USER:-$USER}" yay -S --noconfirm legionaura 2>/dev/null \
+            && ok "legionaura installed" \
+            || warn "legionaura install failed — run manually: yay -S legionaura"
+    else
+        warn "yay not found — install legionaura manually: yay -S legionaura"
+    fi
+else
+    ok "legionaura already installed"
 fi
 
 # ── Hardware detection ────────────────────────────────────────────────────────
