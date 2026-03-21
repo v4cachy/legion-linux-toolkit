@@ -180,7 +180,35 @@ ok "Active profile  : $PROFILE"
 ok "Available       : $CHOICES"
 
 echo -e "\n${GREEN}${BOLD}✓ Installation complete!${NC}\n"
-echo -e "  Start tray now:  ${CYAN}/usr/lib/legion-toolkit/legion-tray.py &${NC}"
-echo    "  Update:          sudo bash update.sh"
-echo    "  Logs:            journalctl -fu legion-toolkit.service"
+
+# ── Auto-launch tray as the real desktop user ─────────────────────────────────
+REAL_USER="${SUDO_USER:-$(logname 2>/dev/null || echo "")}"
+if [[ -n "$REAL_USER" ]]; then
+    REAL_UID=$(id -u "$REAL_USER")
+    XDGRT="/run/user/${REAL_UID}"
+    WAYLAND_DISP=$(ls "${XDGRT}/wayland-"* 2>/dev/null \
+        | head -1 | xargs basename 2>/dev/null || echo "wayland-0")
+
+    info "Launching tray as ${REAL_USER}…"
+    sudo -u "$REAL_USER" \
+        XDG_RUNTIME_DIR="$XDGRT" \
+        WAYLAND_DISPLAY="$WAYLAND_DISP" \
+        QT_QPA_PLATFORM="wayland" \
+        nohup /usr/lib/legion-toolkit/legion-tray.py \
+        > /tmp/legion-tray.log 2>&1 &
+
+    sleep 1
+    if pgrep -f legion-tray.py > /dev/null; then
+        ok "Tray launched — Legion icon now visible in your system tray"
+    else
+        warn "Tray did not start — check: cat /tmp/legion-tray.log"
+    fi
+else
+    warn "Could not detect desktop user — start tray manually:"
+    echo -e "     ${CYAN}/usr/lib/legion-toolkit/legion-tray.py &${NC}"
+fi
+
+echo ""
+echo    "  Update:  sudo bash update.sh"
+echo    "  Logs:    journalctl -fu legion-toolkit.service"
 echo ""
