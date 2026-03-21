@@ -50,6 +50,19 @@ USB_CHARGING      = IDEAPAD_BASE / "usb_charging"
 AMD_BOOST         = Path("/sys/devices/system/cpu/cpufreq/boost")
 DAEMON_BIN        = Path("/usr/lib/legion-toolkit/legion-daemon.py")
 LEGION_BASE       = Path("/sys/devices/pci0000:00/0000:00:14.3/PNP0C09:00")
+
+# Some Legion Slim models (e.g. 16APH8/82Y9) expose the same features
+# under a different path via the legion_laptop module
+_LEGION_ALT_BASES = [
+    LEGION_BASE,
+    Path("/sys/module/legion_laptop/drivers/platform:legion/PNP0C09:00"),
+    Path("/sys/bus/platform/drivers/legion/PNP0C09:00"),
+]
+# Use whichever base path actually exists
+for _alt in _LEGION_ALT_BASES:
+    if _alt.exists():
+        LEGION_BASE = _alt
+        break
 TOUCHPAD          = LEGION_BASE / "touchpad"
 RAPID_CHARGE      = LEGION_BASE / "rapidcharge"
 WINKEY            = LEGION_BASE / "winkey"
