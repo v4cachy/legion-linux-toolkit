@@ -109,7 +109,11 @@ chk "ideapad_acpi  (battery/camera/fn lock)"  "/sys/bus/platform/drivers/ideapad
 chk "fan_fullspeed"                           "/sys/devices/pci0000:00/0000:00:14.3/PNP0C09:00/fan_fullspeed"
 chk "thermalmode"                             "/sys/devices/pci0000:00/0000:00:14.3/PNP0C09:00/thermalmode"
 chk "kbd_backlight  (Fn+Space brightness)"    "/sys/class/leds/platform::kbd_backlight/brightness"
-chk "display backlight  (screen dimming)"     "/sys/class/backlight/amdgpu_bl0/brightness"
+# Backlight — check whichever exists (nvidia_wmi_ec or amdgpu_bl0)
+BL_PATH=$(ls /sys/class/backlight/*/brightness 2>/dev/null | head -1 || true)
+[[ -n "$BL_PATH" ]] \
+    && echo -e "     ${GREEN}✓${NC}  display backlight  →  $(dirname $BL_PATH)" \
+    || echo -e "     ${YELLOW}-${NC}  display backlight  ${YELLOW}(not found)${NC}"
 
 HWMON=$(grep -rl "^legion_hwmon$" /sys/class/hwmon/*/name 2>/dev/null \
     | xargs dirname 2>/dev/null | head -1 || true)
