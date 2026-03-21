@@ -91,6 +91,373 @@ ACTIONS_CFG       = Path.home() / ".config/legion-toolkit/actions.json"
 OC_CFG            = Path.home() / ".config/legion-toolkit/overclock.json"
 FAN_CFG           = Path.home() / ".config/legion-toolkit/fan.json"
 APP_CFG           = Path.home() / ".config/legion-toolkit/appearance.json"
+HARDWARE_CFG      = Path.home() / ".config/legion-toolkit/hardware.json"
+LANG_CFG          = Path.home() / ".config/legion-toolkit/language.json"
+FIRST_RUN_FLAG    = Path.home() / ".config/legion-toolkit/first_run_done"
+
+# ══════════════════════════════════════════════════════════════════════════════
+# TRANSLATIONS
+# ══════════════════════════════════════════════════════════════════════════════
+_LANG = "en"   # set by first-run wizard or saved config
+
+_TR = {
+    "en": {
+        "app_name":"Legion Linux Toolkit","home":"Home","battery":"Battery",
+        "performance":"Performance","display":"Display","keyboard":"Keyboard",
+        "system":"System","overclock":"Overclock","fan":"Fan","actions":"Actions",
+        "about":"About","power_mode":"Power Mode","battery_mode":"Battery Mode",
+        "gpu_mode":"GPU Working Mode","apply":"Apply","save":"Save",
+        "enabled":"Enabled","disabled":"Disabled","on":"ON","off":"OFF",
+        "auto":"Auto","full_speed":"Full Speed","detecting":"Detecting hardware…",
+        "welcome":"Welcome to Legion Linux Toolkit",
+        "choose_lang":"Choose your language to get started.",
+        "hw_detect_title":"Hardware Detection",
+        "hw_detect_desc":"Scanning your device — this runs once and is saved.",
+        "hw_done":"Detection complete!","next":"Next","finish":"Finish",
+        "brightness":"Brightness","resolution":"Resolution",
+        "refresh_rate":"Refresh Rate","theme":"Theme",
+        "conservation":"Conservation (~60%)","rapid_charge":"Rapid Charge",
+        "normal":"Normal","quiet":"Quiet","balanced":"Balanced",
+        "performance_label":"Performance","custom":"Custom",
+    },
+    "fr": {
+        "app_name":"Legion Linux Toolkit","home":"Accueil","battery":"Batterie",
+        "performance":"Performance","display":"Affichage","keyboard":"Clavier",
+        "system":"Système","overclock":"Overclocking","fan":"Ventilateur",
+        "actions":"Actions","about":"À propos","power_mode":"Mode d'alimentation",
+        "battery_mode":"Mode batterie","gpu_mode":"Mode GPU",
+        "apply":"Appliquer","save":"Enregistrer",
+        "enabled":"Activé","disabled":"Désactivé","on":"OUI","off":"NON",
+        "auto":"Auto","full_speed":"Vitesse max","detecting":"Détection…",
+        "welcome":"Bienvenue dans Legion Linux Toolkit",
+        "choose_lang":"Choisissez votre langue.",
+        "hw_detect_title":"Détection matérielle",
+        "hw_detect_desc":"Analyse de votre appareil — exécuté une seule fois.",
+        "hw_done":"Détection terminée !","next":"Suivant","finish":"Terminer",
+        "brightness":"Luminosité","resolution":"Résolution",
+        "refresh_rate":"Taux de rafraîchissement","theme":"Thème",
+        "conservation":"Conservation (~60%)","rapid_charge":"Charge rapide",
+        "normal":"Normal","quiet":"Silencieux","balanced":"Équilibré",
+        "performance_label":"Performance","custom":"Personnalisé",
+    },
+    "de": {
+        "app_name":"Legion Linux Toolkit","home":"Start","battery":"Akku",
+        "performance":"Leistung","display":"Anzeige","keyboard":"Tastatur",
+        "system":"System","overclock":"Übertaktung","fan":"Lüfter",
+        "actions":"Aktionen","about":"Über","power_mode":"Energiemodus",
+        "battery_mode":"Akkumodus","gpu_mode":"GPU-Modus",
+        "apply":"Anwenden","save":"Speichern",
+        "enabled":"Aktiviert","disabled":"Deaktiviert","on":"AN","off":"AUS",
+        "auto":"Auto","full_speed":"Volle Drehzahl","detecting":"Erkennung…",
+        "welcome":"Willkommen bei Legion Linux Toolkit",
+        "choose_lang":"Wählen Sie Ihre Sprache.",
+        "hw_detect_title":"Hardware-Erkennung",
+        "hw_detect_desc":"Gerät wird einmalig gescannt und gespeichert.",
+        "hw_done":"Erkennung abgeschlossen!","next":"Weiter","finish":"Fertig",
+        "brightness":"Helligkeit","resolution":"Auflösung",
+        "refresh_rate":"Bildwiederholrate","theme":"Design",
+        "conservation":"Schutz (~60%)","rapid_charge":"Schnellladen",
+        "normal":"Normal","quiet":"Leise","balanced":"Ausgewogen",
+        "performance_label":"Leistung","custom":"Benutzerdefiniert",
+    },
+    "es": {
+        "app_name":"Legion Linux Toolkit","home":"Inicio","battery":"Batería",
+        "performance":"Rendimiento","display":"Pantalla","keyboard":"Teclado",
+        "system":"Sistema","overclock":"Overclocking","fan":"Ventilador",
+        "actions":"Acciones","about":"Acerca de","power_mode":"Modo energía",
+        "battery_mode":"Modo batería","gpu_mode":"Modo GPU",
+        "apply":"Aplicar","save":"Guardar",
+        "enabled":"Activado","disabled":"Desactivado","on":"ON","off":"OFF",
+        "auto":"Auto","full_speed":"Velocidad máx","detecting":"Detectando…",
+        "welcome":"Bienvenido a Legion Linux Toolkit",
+        "choose_lang":"Elige tu idioma.",
+        "hw_detect_title":"Detección de hardware",
+        "hw_detect_desc":"Escaneando tu dispositivo — se ejecuta una vez.",
+        "hw_done":"¡Detección completa!","next":"Siguiente","finish":"Finalizar",
+        "brightness":"Brillo","resolution":"Resolución",
+        "refresh_rate":"Tasa de refresco","theme":"Tema",
+        "conservation":"Conservación (~60%)","rapid_charge":"Carga rápida",
+        "normal":"Normal","quiet":"Silencioso","balanced":"Equilibrado",
+        "performance_label":"Rendimiento","custom":"Personalizado",
+    },
+    "pt": {
+        "app_name":"Legion Linux Toolkit","home":"Início","battery":"Bateria",
+        "performance":"Desempenho","display":"Ecrã","keyboard":"Teclado",
+        "system":"Sistema","overclock":"Overclocking","fan":"Ventoinha",
+        "actions":"Ações","about":"Sobre","power_mode":"Modo de energia",
+        "battery_mode":"Modo bateria","gpu_mode":"Modo GPU",
+        "apply":"Aplicar","save":"Guardar",
+        "enabled":"Ativado","disabled":"Desativado","on":"ON","off":"OFF",
+        "auto":"Auto","full_speed":"Vel. máxima","detecting":"A detetar…",
+        "welcome":"Bem-vindo ao Legion Linux Toolkit",
+        "choose_lang":"Escolha o seu idioma.",
+        "hw_detect_title":"Deteção de hardware",
+        "hw_detect_desc":"A analisar o seu dispositivo — executado uma vez.",
+        "hw_done":"Deteção concluída!","next":"Seguinte","finish":"Concluir",
+        "brightness":"Brilho","resolution":"Resolução",
+        "refresh_rate":"Taxa de atualização","theme":"Tema",
+        "conservation":"Conservação (~60%)","rapid_charge":"Carga rápida",
+        "normal":"Normal","quiet":"Silencioso","balanced":"Equilibrado",
+        "performance_label":"Desempenho","custom":"Personalizado",
+    },
+    "tr": {
+        "app_name":"Legion Linux Toolkit","home":"Ana Sayfa","battery":"Pil",
+        "performance":"Performans","display":"Ekran","keyboard":"Klavye",
+        "system":"Sistem","overclock":"Hız Aşırtma","fan":"Fan",
+        "actions":"Eylemler","about":"Hakkında","power_mode":"Güç modu",
+        "battery_mode":"Pil modu","gpu_mode":"GPU modu",
+        "apply":"Uygula","save":"Kaydet",
+        "enabled":"Etkin","disabled":"Devre dışı","on":"AÇIK","off":"KAPALI",
+        "auto":"Otomatik","full_speed":"Tam hız","detecting":"Algılanıyor…",
+        "welcome":"Legion Linux Toolkit'e Hoş Geldiniz",
+        "choose_lang":"Dilinizi seçin.",
+        "hw_detect_title":"Donanım Algılama",
+        "hw_detect_desc":"Cihazınız taranıyor — yalnızca bir kez çalışır.",
+        "hw_done":"Algılama tamamlandı!","next":"İleri","finish":"Bitir",
+        "brightness":"Parlaklık","resolution":"Çözünürlük",
+        "refresh_rate":"Yenileme hızı","theme":"Tema",
+        "conservation":"Koruma (~%60)","rapid_charge":"Hızlı şarj",
+        "normal":"Normal","quiet":"Sessiz","balanced":"Dengeli",
+        "performance_label":"Performans","custom":"Özel",
+    },
+    "ru": {
+        "app_name":"Legion Linux Toolkit","home":"Главная","battery":"Батарея",
+        "performance":"Производительность","display":"Дисплей","keyboard":"Клавиатура",
+        "system":"Система","overclock":"Разгон","fan":"Вентилятор",
+        "actions":"Действия","about":"О программе","power_mode":"Режим питания",
+        "battery_mode":"Режим батареи","gpu_mode":"Режим GPU",
+        "apply":"Применить","save":"Сохранить",
+        "enabled":"Включено","disabled":"Выключено","on":"ВКЛ","off":"ВЫКЛ",
+        "auto":"Авто","full_speed":"Макс. скорость","detecting":"Определение…",
+        "welcome":"Добро пожаловать в Legion Linux Toolkit",
+        "choose_lang":"Выберите язык.",
+        "hw_detect_title":"Обнаружение оборудования",
+        "hw_detect_desc":"Сканирование устройства — выполняется один раз.",
+        "hw_done":"Обнаружение завершено!","next":"Далее","finish":"Готово",
+        "brightness":"Яркость","resolution":"Разрешение",
+        "refresh_rate":"Частота обновления","theme":"Тема",
+        "conservation":"Защита (~60%)","rapid_charge":"Быстрая зарядка",
+        "normal":"Нормальный","quiet":"Тихий","balanced":"Сбалансированный",
+        "performance_label":"Производительность","custom":"Пользовательский",
+    },
+    "zh": {
+        "app_name":"军团 Linux 工具包","home":"主页","battery":"电池",
+        "performance":"性能","display":"显示","keyboard":"键盘",
+        "system":"系统","overclock":"超频","fan":"风扇",
+        "actions":"操作","about":"关于","power_mode":"电源模式",
+        "battery_mode":"电池模式","gpu_mode":"GPU 模式",
+        "apply":"应用","save":"保存",
+        "enabled":"已启用","disabled":"已禁用","on":"开","off":"关",
+        "auto":"自动","full_speed":"全速","detecting":"检测中…",
+        "welcome":"欢迎使用军团 Linux 工具包",
+        "choose_lang":"请选择您的语言。",
+        "hw_detect_title":"硬件检测",
+        "hw_detect_desc":"正在扫描您的设备 — 仅运行一次。",
+        "hw_done":"检测完成！","next":"下一步","finish":"完成",
+        "brightness":"亮度","resolution":"分辨率",
+        "refresh_rate":"刷新率","theme":"主题",
+        "conservation":"保护模式 (~60%)","rapid_charge":"快速充电",
+        "normal":"正常","quiet":"安静","balanced":"均衡",
+        "performance_label":"性能","custom":"自定义",
+    },
+    "ja": {
+        "app_name":"Legion Linux ツールキット","home":"ホーム","battery":"バッテリー",
+        "performance":"パフォーマンス","display":"ディスプレイ","keyboard":"キーボード",
+        "system":"システム","overclock":"オーバークロック","fan":"ファン",
+        "actions":"アクション","about":"このアプリについて","power_mode":"電源モード",
+        "battery_mode":"バッテリーモード","gpu_mode":"GPU モード",
+        "apply":"適用","save":"保存",
+        "enabled":"有効","disabled":"無効","on":"オン","off":"オフ",
+        "auto":"自動","full_speed":"最大速度","detecting":"検出中…",
+        "welcome":"Legion Linux ツールキットへようこそ",
+        "choose_lang":"言語を選択してください。",
+        "hw_detect_title":"ハードウェア検出",
+        "hw_detect_desc":"デバイスをスキャン中 — 一度だけ実行されます。",
+        "hw_done":"検出完了！","next":"次へ","finish":"完了",
+        "brightness":"輝度","resolution":"解像度",
+        "refresh_rate":"リフレッシュレート","theme":"テーマ",
+        "conservation":"保護モード (~60%)","rapid_charge":"急速充電",
+        "normal":"通常","quiet":"静音","balanced":"バランス",
+        "performance_label":"パフォーマンス","custom":"カスタム",
+    },
+    "ko": {
+        "app_name":"Legion Linux 툴킷","home":"홈","battery":"배터리",
+        "performance":"성능","display":"디스플레이","keyboard":"키보드",
+        "system":"시스템","overclock":"오버클럭","fan":"팬",
+        "actions":"작업","about":"정보","power_mode":"전원 모드",
+        "battery_mode":"배터리 모드","gpu_mode":"GPU 모드",
+        "apply":"적용","save":"저장",
+        "enabled":"활성화","disabled":"비활성화","on":"켜짐","off":"꺼짐",
+        "auto":"자동","full_speed":"최대 속도","detecting":"감지 중…",
+        "welcome":"Legion Linux 툴킷에 오신 것을 환영합니다",
+        "choose_lang":"언어를 선택하세요.",
+        "hw_detect_title":"하드웨어 감지",
+        "hw_detect_desc":"장치 스캔 중 — 한 번만 실행됩니다.",
+        "hw_done":"감지 완료!","next":"다음","finish":"완료",
+        "brightness":"밝기","resolution":"해상도",
+        "refresh_rate":"주사율","theme":"테마",
+        "conservation":"보호 모드 (~60%)","rapid_charge":"급속 충전",
+        "normal":"일반","quiet":"조용함","balanced":"균형",
+        "performance_label":"성능","custom":"사용자 지정",
+    },
+    "ar": {
+        "app_name":"Legion Linux Toolkit","home":"الرئيسية","battery":"البطارية",
+        "performance":"الأداء","display":"الشاشة","keyboard":"لوحة المفاتيح",
+        "system":"النظام","overclock":"رفع التردد","fan":"المروحة",
+        "actions":"الإجراءات","about":"حول","power_mode":"وضع الطاقة",
+        "battery_mode":"وضع البطارية","gpu_mode":"وضع GPU",
+        "apply":"تطبيق","save":"حفظ",
+        "enabled":"مُفعَّل","disabled":"معطَّل","on":"تشغيل","off":"إيقاف",
+        "auto":"تلقائي","full_speed":"السرعة الكاملة","detecting":"جارٍ الاكتشاف…",
+        "welcome":"مرحباً بك في Legion Linux Toolkit",
+        "choose_lang":"اختر لغتك للبدء.",
+        "hw_detect_title":"اكتشاف الأجهزة",
+        "hw_detect_desc":"جارٍ مسح الجهاز — يعمل مرة واحدة فقط.",
+        "hw_done":"اكتمل الاكتشاف!","next":"التالي","finish":"إنهاء",
+        "brightness":"السطوع","resolution":"الدقة",
+        "refresh_rate":"معدل التحديث","theme":"السمة",
+        "conservation":"الحماية (~60%)","rapid_charge":"الشحن السريع",
+        "normal":"عادي","quiet":"صامت","balanced":"متوازن",
+        "performance_label":"أداء","custom":"مخصص",
+    },
+}
+
+_LANG_NAMES = {
+    "en":"English","fr":"Français","de":"Deutsch","es":"Español",
+    "pt":"Português","tr":"Türkçe","ru":"Русский","zh":"中文",
+    "ja":"日本語","ko":"한국어","ar":"العربية",
+}
+
+def tr(key: str) -> str:
+    """Translate a key using the current language, fall back to English."""
+    return _TR.get(_LANG, _TR["en"]).get(key, _TR["en"].get(key, key))
+
+def load_language():
+    global _LANG
+    try:
+        if LANG_CFG.exists():
+            _LANG = json.loads(LANG_CFG.read_text()).get("lang","en")
+    except: _LANG = "en"
+
+def save_language(lang: str):
+    global _LANG
+    _LANG = lang
+    try:
+        LANG_CFG.parent.mkdir(parents=True, exist_ok=True)
+        LANG_CFG.write_text(json.dumps({"lang": lang}))
+    except: pass
+
+# ══════════════════════════════════════════════════════════════════════════════
+# HARDWARE DETECTION
+# ══════════════════════════════════════════════════════════════════════════════
+def _dmi(field: str) -> str:
+    try: return Path(f"/sys/class/dmi/id/{field}").read_text().strip().lower()
+    except: return ""
+
+def detect_hardware() -> dict:
+    """
+    Detect Lenovo brand, model and hardware capabilities.
+    Returns a capability dict saved to HARDWARE_CFG.
+    """
+    vendor      = _dmi("sys_vendor")
+    product     = _dmi("product_name")
+    family      = _dmi("product_family")
+    chassis     = _dmi("chassis_type")
+
+    # ── Brand detection ───────────────────────────────────────────────────────
+    full = f"{product} {family}"
+    if any(k in full for k in ["legion","loq"]):
+        brand = "legion" if "legion" in full else "loq"
+    elif "thinkpad" in full:
+        brand = "thinkpad"
+    elif "thinkbook" in full:
+        brand = "thinkbook"
+    elif "yoga" in full:
+        brand = "yoga"
+    elif "ideapad" in full or "idea" in full:
+        brand = "ideapad"
+    else:
+        brand = "ideapad"   # safe default for unknown Lenovo
+
+    # ── Capability scan — check every relevant sysfs path ────────────────────
+    def ex(p): return Path(p).exists()
+
+    # Universal
+    cap = {
+        "brand":   brand,
+        "model":   _dmi("product_name"),
+        "vendor":  _dmi("sys_vendor"),
+        "family":  _dmi("product_family"),
+
+        # Power
+        "platform_profile":     ex("/sys/firmware/acpi/platform_profile"),
+        "conservation_mode":    ex(str(IDEAPAD_BASE / "conservation_mode")),
+        "rapidcharge":          ex(str(LEGION_BASE / "rapidcharge")),
+        "powerchargemode":      ex(str(LEGION_BASE / "powerchargemode")),
+
+        # Display
+        "overdrive":  ex(str(OVERDRIVE)),
+        "gsync":      ex(str(GSYNC)),
+
+        # Input
+        "fn_lock":    ex(str(FN_LOCK)),
+        "camera":     ex(str(CAMERA_POWER)),
+        "touchpad":   ex(str(TOUCHPAD)),
+        "winkey":     ex(str(WINKEY)),
+        "usb_charging": ex(str(USB_CHARGING)),
+
+        # Fan
+        "fan_fullspeed": ex(str(FAN_FULLSPEED)),
+        "thermalmode":   ex(str(THERMAL_MODE)),
+
+        # Backlight
+        "kbd_backlight": ex("/sys/class/leds/platform::kbd_backlight/brightness"),
+        "screen_backlight": bool(list(Path("/sys/class/backlight").iterdir())
+                                 if Path("/sys/class/backlight").exists() else []),
+
+        # ThinkPad-specific
+        "tp_charge_start": ex("/sys/class/power_supply/BAT0/charge_start_threshold"),
+        "tp_charge_stop":  ex("/sys/class/power_supply/BAT0/charge_stop_threshold"),
+        "tp_fan_control":  ex("/proc/acpi/ibm/fan"),
+        "tp_trackpoint":   bool(list(Path("/sys/bus/serio/devices").glob("*/speed"))
+                                if Path("/sys/bus/serio/devices").exists() else []),
+        "tp_thinklight":   ex("/sys/class/leds/tpacpi::thinklight/brightness"),
+        "tp_micmute_led":  ex("/sys/class/leds/platform::micmute/brightness"),
+
+        # Yoga-specific
+        "yoga_hinge":      ex("/sys/bus/platform/drivers/lenovo-ymc"),
+        "als_sensor":      bool(list(Path("/sys/bus/iio/devices").glob("*/in_illuminance_raw"))
+                                if Path("/sys/bus/iio/devices").exists() else []),
+
+        # Legion-specific
+        "legionaura":      bool(subprocess.run(["which","legionaura"],
+                               capture_output=True).returncode == 0),
+        "envycontrol":     bool(subprocess.run(["which","envycontrol"],
+                               capture_output=True).returncode == 0),
+
+        # Misc
+        "fingerprint": bool(list(Path("/sys/bus/usb/drivers/validity-sensor").glob("*"))
+                           if Path("/sys/bus/usb/drivers/validity-sensor").exists() else []),
+        "wwan": bool(list(Path("/sys/class/net").glob("ww*"))
+                    if Path("/sys/class/net").exists() else []),
+    }
+    return cap
+
+def load_hardware() -> dict:
+    try:
+        if HARDWARE_CFG.exists():
+            return json.loads(HARDWARE_CFG.read_text())
+    except: pass
+    return {}
+
+def save_hardware(cap: dict):
+    try:
+        HARDWARE_CFG.parent.mkdir(parents=True, exist_ok=True)
+        HARDWARE_CFG.write_text(json.dumps(cap, indent=2))
+    except: pass
+
+# Global hardware profile — loaded at startup
+HW: dict = {}
 
 # L1 AI Engine — try multiple known paths from LenovoLegionLinux driver
 _AI_ENGINE_PATHS = [
@@ -1461,6 +1828,320 @@ class InfoRow(QWidget):
     def set_value(self, v): self._val.setText(v)
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# FIRST-RUN WIZARD  (language selector + hardware detection)
+# ══════════════════════════════════════════════════════════════════════════════
+from PyQt6.QtWidgets import QDialog, QDialogButtonBox, QProgressBar, QListWidget, QListWidgetItem
+
+class FirstRunWizard(QDialog):
+    """
+    Shown once on first launch.
+    Page 0 → Language selection
+    Page 1 → Hardware detection with progress
+    Page 2 → Summary / done
+    """
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Legion Linux Toolkit — Setup")
+        self.setFixedSize(560, 440)
+        self.setWindowIcon(_legion_icon())
+        self.setStyleSheet(f"""
+            QDialog {{ background:{C_BG}; }}
+            QLabel  {{ color:{C_TEXT}; background:transparent; }}
+            QPushButton {{
+                background:{C_CARD2}; color:{C_TEXT}; border:1px solid {C_BORDER};
+                border-radius:6px; padding:8px 20px; font-size:13px;
+            }}
+            QPushButton:hover {{ background:{C_ACCENT}; color:#fff; border-color:{C_ACCENT}; }}
+            QListWidget {{
+                background:{C_CARD}; border:1px solid {C_BORDER};
+                border-radius:8px; color:{C_TEXT}; font-size:13px;
+            }}
+            QListWidget::item:selected {{
+                background:{C_ACCENT}; color:#fff; border-radius:4px;
+            }}
+            QListWidget::item:hover {{ background:{C_CARD2}; }}
+        """)
+        self._hw_result = {}
+        self._build()
+
+    def _build(self):
+        root = QVBoxLayout(self); root.setContentsMargins(32,28,32,24); root.setSpacing(0)
+
+        # ── Logo + App name ───────────────────────────────────────────────────
+        logo_row = QHBoxLayout()
+        logo_lbl = QLabel()
+        import base64 as _b64
+        from PyQt6.QtGui import QPixmap as _QPixmap
+        pm = _QPixmap(); pm.loadFromData(_b64.b64decode(_LEGION_ICON_B64))
+        logo_lbl.setPixmap(pm.scaled(44, 52, Qt.AspectRatioMode.KeepAspectRatio,
+                                     Qt.TransformationMode.SmoothTransformation))
+        logo_row.addWidget(logo_lbl)
+        logo_row.addSpacing(14)
+        app_name = QLabel("Legion Linux Toolkit")
+        app_name.setStyleSheet(f"color:{C_TEXT};font-size:20px;font-weight:bold;")
+        logo_row.addWidget(app_name); logo_row.addStretch()
+        root.addLayout(logo_row)
+        root.addSpacing(20)
+
+        # ── Stacked pages ─────────────────────────────────────────────────────
+        self._stack = QStackedWidget()
+        self._stack.addWidget(self._page_lang())
+        self._stack.addWidget(self._page_detect())
+        self._stack.addWidget(self._page_done())
+        root.addWidget(self._stack, 1)
+
+        root.addSpacing(16)
+
+        # ── Navigation buttons ────────────────────────────────────────────────
+        btn_row = QHBoxLayout()
+        btn_row.addStretch()
+        self._back_btn = QPushButton("← Back")
+        self._back_btn.setVisible(False)
+        self._back_btn.clicked.connect(self._go_back)
+        self._next_btn = QPushButton("Next →")
+        self._next_btn.clicked.connect(self._go_next)
+        self._next_btn.setStyleSheet(
+            f"QPushButton{{background:{C_ACCENT};color:#fff;border:none;"
+            f"border-radius:6px;padding:8px 24px;font-size:13px;font-weight:bold;}}"
+            f"QPushButton:hover{{background:#aa2222;}}"
+        )
+        btn_row.addWidget(self._back_btn); btn_row.addWidget(self._next_btn)
+        root.addLayout(btn_row)
+
+        # Page indicator dots
+        self._dots = QHBoxLayout(); self._dots.setSpacing(6)
+        self._dot_lbls = []
+        for _ in range(3):
+            d = QLabel("●"); d.setStyleSheet(f"color:{C_TEXT3};font-size:10px;")
+            self._dot_lbls.append(d); self._dots.addWidget(d)
+        self._dots.addStretch()
+        root.addLayout(self._dots)
+        self._update_dots(0)
+
+    def _page_lang(self) -> QWidget:
+        w = QWidget(); w.setStyleSheet("background:transparent;")
+        lay = QVBoxLayout(w); lay.setContentsMargins(0,0,0,0); lay.setSpacing(10)
+        title = QLabel("Choose Your Language")
+        title.setStyleSheet(f"color:{C_TEXT};font-size:16px;font-weight:bold;")
+        desc = QLabel("Select the language for the interface.")
+        desc.setStyleSheet(f"color:{C_TEXT2};font-size:12px;")
+        lay.addWidget(title); lay.addWidget(desc); lay.addSpacing(8)
+
+        self._lang_list = QListWidget()
+        self._lang_list.setFixedHeight(220)
+        # Pre-select saved or system language
+        saved = _LANG
+        sel_row = 0
+        for i, (code, name) in enumerate(_LANG_NAMES.items()):
+            item = QListWidgetItem(f"  {name}")
+            item.setData(Qt.ItemDataRole.UserRole, code)
+            self._lang_list.addItem(item)
+            if code == saved: sel_row = i
+        self._lang_list.setCurrentRow(sel_row)
+        self._lang_list.itemClicked.connect(self._on_lang_select)
+        lay.addWidget(self._lang_list)
+        return w
+
+    def _page_detect(self) -> QWidget:
+        w = QWidget(); w.setStyleSheet("background:transparent;")
+        lay = QVBoxLayout(w); lay.setContentsMargins(0,0,0,0); lay.setSpacing(10)
+        self._detect_title = QLabel("Hardware Detection")
+        self._detect_title.setStyleSheet(f"color:{C_TEXT};font-size:16px;font-weight:bold;")
+        self._detect_desc = QLabel("Scanning your device for supported features.\nThis runs once and the result is saved.")
+        self._detect_desc.setStyleSheet(f"color:{C_TEXT2};font-size:12px;")
+        self._detect_desc.setWordWrap(True)
+        lay.addWidget(self._detect_title); lay.addWidget(self._detect_desc)
+        lay.addSpacing(12)
+
+        self._progress = QProgressBar()
+        self._progress.setRange(0, 0)   # indeterminate
+        self._progress.setFixedHeight(6)
+        self._progress.setStyleSheet(
+            f"QProgressBar{{background:{C_BORDER};border-radius:3px;border:none;}}"
+            f"QProgressBar::chunk{{background:{C_ACCENT};border-radius:3px;}}"
+        )
+        self._progress.hide()
+        lay.addWidget(self._progress)
+
+        self._detect_status = QLabel("")
+        self._detect_status.setStyleSheet(f"color:{C_TEXT3};font-size:11px;font-family:monospace;")
+        self._detect_status.setWordWrap(True)
+        lay.addWidget(self._detect_status)
+        lay.addStretch()
+        return w
+
+    def _page_done(self) -> QWidget:
+        w = QWidget(); w.setStyleSheet("background:transparent;")
+        lay = QVBoxLayout(w); lay.setContentsMargins(0,0,0,0); lay.setSpacing(10)
+        done_title = QLabel("✓  Setup Complete")
+        done_title.setStyleSheet(f"color:{C_GREEN};font-size:18px;font-weight:bold;")
+        done_desc = QLabel("Your hardware profile has been saved.\nThe dashboard is ready to use.")
+        done_desc.setStyleSheet(f"color:{C_TEXT2};font-size:12px;")
+        done_desc.setWordWrap(True)
+        lay.addWidget(done_title); lay.addWidget(done_desc); lay.addSpacing(8)
+
+        self._summary_lbl = QLabel("")
+        self._summary_lbl.setStyleSheet(
+            f"color:{C_TEXT2};font-size:11px;font-family:monospace;"
+            f"background:{C_CARD};border-radius:8px;padding:12px;")
+        self._summary_lbl.setWordWrap(True)
+        lay.addWidget(self._summary_lbl)
+        lay.addStretch()
+        return w
+
+    def _on_lang_select(self, item):
+        code = item.data(Qt.ItemDataRole.UserRole)
+        save_language(code)
+
+    def _update_dots(self, page: int):
+        for i, d in enumerate(self._dot_lbls):
+            d.setStyleSheet(
+                f"color:{C_ACCENT};font-size:10px;" if i == page
+                else f"color:{C_TEXT3};font-size:10px;"
+            )
+
+    def _go_next(self):
+        cur = self._stack.currentIndex()
+        if cur == 0:
+            # Save language from list
+            item = self._lang_list.currentItem()
+            if item:
+                save_language(item.data(Qt.ItemDataRole.UserRole))
+            self._stack.setCurrentIndex(1)
+            self._back_btn.setVisible(True)
+            self._update_dots(1)
+            self._next_btn.setEnabled(False)
+            self._next_btn.setText("Detecting…")
+            # Run detection in background
+            threading.Thread(target=self._run_detection, daemon=True).start()
+
+        elif cur == 1:
+            self._stack.setCurrentIndex(2)
+            self._update_dots(2)
+            self._next_btn.setText("Finish")
+
+        elif cur == 2:
+            self.accept()
+
+    def _go_back(self):
+        cur = self._stack.currentIndex()
+        if cur > 0:
+            self._stack.setCurrentIndex(cur - 1)
+            self._update_dots(cur - 1)
+            if cur - 1 == 0:
+                self._back_btn.setVisible(False)
+            self._next_btn.setText("Next →")
+            self._next_btn.setEnabled(True)
+
+    def _run_detection(self):
+        """Called from worker thread."""
+        from PyQt6.QtCore import QMetaObject, Q_ARG
+        def upd(msg):
+            QMetaObject.invokeMethod(self._detect_status, "setText",
+                Qt.ConnectionType.QueuedConnection, Q_ARG(str, msg))
+
+        QMetaObject.invokeMethod(self._progress, "show",
+            Qt.ConnectionType.QueuedConnection)
+
+        steps = [
+            ("Reading DMI info…",           lambda: _dmi("product_name")),
+            ("Checking power profiles…",    lambda: Path("/sys/firmware/acpi/platform_profile").exists()),
+            ("Checking fan control…",       lambda: FAN_FULLSPEED.exists()),
+            ("Checking battery paths…",     lambda: BAT.exists()),
+            ("Checking backlight…",         lambda: any(Path("/sys/class/backlight").iterdir()) if Path("/sys/class/backlight").exists() else False),
+            ("Checking ThinkPad features…", lambda: Path("/proc/acpi/ibm/fan").exists()),
+            ("Checking Yoga hinge…",        lambda: Path("/sys/bus/platform/drivers/lenovo-ymc").exists()),
+            ("Checking envycontrol…",       lambda: subprocess.run(["which","envycontrol"],capture_output=True).returncode==0),
+            ("Checking legionaura…",        lambda: subprocess.run(["which","legionaura"],capture_output=True).returncode==0),
+            ("Building capability map…",    lambda: detect_hardware()),
+        ]
+
+        lines = []
+        cap = {}
+        for msg, fn in steps:
+            upd(msg)
+            time.sleep(0.15)
+            try:
+                result = fn()
+                if isinstance(result, dict):
+                    cap = result
+                status = "✓" if result else "—"
+                lines.append(f"{status}  {msg.rstrip('…')}")
+            except Exception as e:
+                lines.append(f"✗  {msg.rstrip('…')}: {e}")
+
+        if not cap:
+            cap = detect_hardware()
+
+        save_hardware(cap)
+        FIRST_RUN_FLAG.parent.mkdir(parents=True, exist_ok=True)
+        FIRST_RUN_FLAG.touch()
+
+        global HW
+        HW = cap
+
+        # Build summary
+        brand = cap.get("brand","unknown").upper()
+        model = cap.get("model","Unknown")
+        feats = []
+        if cap.get("platform_profile"): feats.append("Power Profiles")
+        if cap.get("fan_fullspeed"):    feats.append("Fan Control")
+        if cap.get("tp_charge_start"):  feats.append("ThinkPad Charge Thresholds")
+        if cap.get("tp_fan_control"):   feats.append("ThinkPad Fan Levels")
+        if cap.get("yoga_hinge"):       feats.append("Yoga Hinge Mode")
+        if cap.get("legionaura"):       feats.append("RGB Keyboard (LegionAura)")
+        if cap.get("envycontrol"):      feats.append("GPU Mode Switching")
+        if cap.get("overdrive"):        feats.append("Display Overdrive")
+        if cap.get("gsync"):            feats.append("G-Sync")
+
+        summary = f"Brand: {brand}\nModel: {model}\n\nDetected features:\n"
+        summary += "\n".join(f"  ✓  {f}" for f in feats) if feats else "  — No special features detected"
+
+        def finish_up():
+            self._progress.hide()
+            self._detect_status.setText("\n".join(lines[-4:]))
+            self._summary_lbl.setText(summary)
+            self._next_btn.setEnabled(True)
+            self._next_btn.setText("Next →")
+            self._stack.setCurrentIndex(2)
+            self._update_dots(2)
+            self._next_btn.setText("Finish")
+
+        QMetaObject.invokeMethod(self, "_finish_detection",
+            Qt.ConnectionType.QueuedConnection)
+
+    from PyQt6.QtCore import pyqtSlot
+
+    @pyqtSlot()
+    def _finish_detection(self):
+        cap = HW
+        brand = cap.get("brand","unknown").upper()
+        model = cap.get("model","Unknown")
+        feats = []
+        if cap.get("platform_profile"): feats.append("Power Profiles")
+        if cap.get("fan_fullspeed"):    feats.append("Fan Control")
+        if cap.get("tp_charge_start"):  feats.append("ThinkPad Charge Thresholds")
+        if cap.get("tp_fan_control"):   feats.append("ThinkPad Fan Levels (0–7)")
+        if cap.get("yoga_hinge"):       feats.append("Yoga Hinge Mode")
+        if cap.get("legionaura"):       feats.append("RGB Keyboard")
+        if cap.get("envycontrol"):      feats.append("GPU Mode Switching")
+        if cap.get("overdrive"):        feats.append("Display Overdrive")
+        if cap.get("gsync"):            feats.append("G-Sync")
+        if cap.get("tp_thinklight"):    feats.append("ThinkLight")
+        if cap.get("tp_micmute_led"):   feats.append("Mic Mute LED")
+        if cap.get("als_sensor"):       feats.append("Ambient Light Sensor")
+
+        summary = f"Brand:  {brand}\nModel:  {model}\n\nAvailable features:\n"
+        summary += "\n".join(f"  ✓  {f}" for f in feats) if feats else "  — Standard features only"
+        self._summary_lbl.setText(summary)
+        self._progress.hide()
+        self._next_btn.setEnabled(True)
+        self._next_btn.setText("Finish")
+        self._update_dots(2)
+        self._stack.setCurrentIndex(2)
+
+
 class ToggleSwitch(QWidget):
     def __init__(self, path=None, on_change=None, parent=None, read_val=None):
         super().__init__(parent)
@@ -2231,7 +2912,79 @@ class BatteryPage(QWidget):
             cl.addWidget(nt)
             if i < len(rows)-1: cl.addWidget(make_div())
         root.addWidget(cc)
+
+        # ── ThinkPad charge thresholds (only shown on ThinkPads) ──────────────
+        if HW.get("tp_charge_start") and HW.get("tp_charge_stop"):
+            tc, tl = make_card("⚡  ThinkPad Charge Thresholds")
+            tp_desc = QLabel(
+                "Set custom start/stop charge levels to preserve long-term battery health.\n"
+                "Example: Start=40%, Stop=80% avoids full cycles.")
+            tp_desc.setWordWrap(True)
+            tp_desc.setStyleSheet(f"color:{C_TEXT2};font-size:11px;background:transparent;")
+            tl.addWidget(tp_desc)
+            tl.addWidget(make_div())
+
+            def _tp_spin(lo, hi, val, label_text):
+                row = QHBoxLayout(); row.setSpacing(12)
+                lbl = QLabel(label_text); lbl.setFixedWidth(130)
+                lbl.setStyleSheet(f"color:{C_TEXT};font-size:12px;background:transparent;")
+                sp = QSpinBox(); sp.setRange(lo, hi); sp.setValue(val); sp.setSuffix(" %")
+                sp.setStyleSheet(
+                    f"QSpinBox{{background:{C_CARD2};color:{C_TEXT};border:1px solid {C_BORDER};"
+                    f"border-radius:6px;padding:6px;font-size:12px;min-width:90px;}}"
+                    f"QSpinBox::up-button,QSpinBox::down-button{{width:20px;background:{C_CARD2};}}"
+                )
+                row.addWidget(lbl); row.addWidget(sp); row.addStretch()
+                return row, sp
+
+            try:
+                cur_start = int(Path("/sys/class/power_supply/BAT0/charge_start_threshold").read_text().strip())
+                cur_stop  = int(Path("/sys/class/power_supply/BAT0/charge_stop_threshold").read_text().strip())
+            except:
+                cur_start, cur_stop = 40, 80
+
+            start_row, self._tp_start = _tp_spin(0, 99, cur_start, "Start charging at:")
+            stop_row,  self._tp_stop  = _tp_spin(1, 100, cur_stop,  "Stop charging at:")
+            tl.addLayout(start_row); tl.addLayout(stop_row)
+
+            tp_apply = QPushButton("Apply Thresholds")
+            tp_apply.setFixedHeight(32)
+            tp_apply.setStyleSheet(
+                f"background:{C_ACCENT};color:#fff;border:none;"
+                f"border-radius:6px;font-size:12px;padding:0 16px;")
+            tp_apply.setCursor(Qt.CursorShape.PointingHandCursor)
+            tp_apply.clicked.connect(self._apply_tp_thresholds)
+            self._tp_status = QLabel("")
+            self._tp_status.setStyleSheet(f"color:{C_GREEN};font-size:11px;background:transparent;")
+            tp_btn_row = QHBoxLayout()
+            tp_btn_row.addWidget(tp_apply); tp_btn_row.addWidget(self._tp_status); tp_btn_row.addStretch()
+            tl.addLayout(tp_btn_row)
+            root.addWidget(tc)
+
         root.addStretch()
+
+    def _apply_tp_thresholds(self):
+        start = self._tp_start.value()
+        stop  = self._tp_stop.value()
+        if start >= stop:
+            self._tp_status.setStyleSheet(f"color:{C_ORANGE};font-size:11px;background:transparent;")
+            self._tp_status.setText("✗  Start must be less than Stop")
+            return
+        def _do():
+            cmds = (
+                f"echo {start} > /sys/class/power_supply/BAT0/charge_start_threshold && "
+                f"echo {stop}  > /sys/class/power_supply/BAT0/charge_stop_threshold"
+            )
+            r = subprocess.run(["pkexec","sh","-c",cmds],
+                               capture_output=True, text=True, timeout=8)
+            if r.returncode == 0:
+                self._tp_status.setStyleSheet(f"color:{C_GREEN};font-size:11px;background:transparent;")
+                self._tp_status.setText(f"✓  Start {start}%  Stop {stop}%")
+                send_notif("Charge Thresholds", f"Start {start}%  →  Stop {stop}%", "battery")
+            else:
+                self._tp_status.setStyleSheet(f"color:{C_ORANGE};font-size:11px;background:transparent;")
+                self._tp_status.setText(f"✗  {r.stderr.strip()[:80]}")
+        threading.Thread(target=_do, daemon=True).start()
 
     def _on_normal_toggle(self, val):
         if val:
@@ -3097,6 +3850,46 @@ class SystemPage(QWidget):
         self._app_status.setStyleSheet(f"color:{C_GREEN};font-size:11px;background:transparent;")
         al.addWidget(self._app_status)
         root.addWidget(ac)
+
+        # ── Yoga hinge mode (only on Yoga devices) ────────────────────────────
+        if HW.get("yoga_hinge"):
+            yc, yl = make_card("🔄  Yoga Mode")
+            yl.addWidget(_mk_lbl(
+                "Your device supports automatic mode switching based on hinge angle.",
+                C_TEXT2, size=11))
+            yl.addWidget(make_div())
+            def _get_yoga_mode() -> str:
+                try:
+                    p = next(Path("/sys/bus/platform/drivers/lenovo-ymc").glob("*/yoga_mode"), None)
+                    if p: return p.read_text().strip()
+                except: pass
+                return "—"
+            self._yoga_mode_lbl = QLabel(f"Current mode: {_get_yoga_mode()}")
+            self._yoga_mode_lbl.setStyleSheet(f"color:{C_BLUE};font-size:13px;font-weight:bold;background:transparent;")
+            yl.addWidget(self._yoga_mode_lbl)
+            yoga_ref = QPushButton("🔄  Refresh Mode")
+            yoga_ref.setFixedHeight(30)
+            yoga_ref.setStyleSheet(f"background:{C_CARD2};color:{C_TEXT};border:1px solid {C_BORDER};border-radius:6px;font-size:11px;")
+            yoga_ref.clicked.connect(lambda: self._yoga_mode_lbl.setText(f"Current mode: {_get_yoga_mode()}"))
+            yl.addWidget(yoga_ref)
+            root.addWidget(yc)
+
+        # ── ThinkPad keyboard extras ──────────────────────────────────────────
+        if HW.get("tp_thinklight") or HW.get("tp_micmute_led"):
+            tpk_c, tpk_l = make_card("⌨️  ThinkPad Extras")
+            if HW.get("tp_thinklight"):
+                tpk_l.addWidget(NotifyToggle(
+                    "ThinkLight", "Keyboard light above the screen.",
+                    Path("/sys/class/leds/tpacpi::thinklight/brightness"),
+                    notif_title="ThinkLight"))
+                tpk_l.addWidget(make_div())
+            if HW.get("tp_micmute_led"):
+                tpk_l.addWidget(NotifyToggle(
+                    "Mic Mute LED", "Sync the mic mute LED with system mute state.",
+                    Path("/sys/class/leds/platform::micmute/brightness"),
+                    notif_title="Mic Mute LED"))
+            root.addWidget(tpk_c)
+
         root.addStretch()
 
     def _on_theme(self, idx):
@@ -4106,14 +4899,32 @@ class AboutPage(QWidget):
     def _build(self):
         root = QVBoxLayout(self); root.setContentsMargins(16,16,16,16); root.setSpacing(10)
         card, lay = make_card("About Legion Linux Toolkit")
+
+        # Logo centred at top
+        from PyQt6.QtGui import QPixmap as _QP
+        import base64 as _b64
+        pm = _QP(); pm.loadFromData(_b64.b64decode(_LEGION_ICON_B64))
+        logo = QLabel(); logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        logo.setPixmap(pm.scaled(56, 68, Qt.AspectRatioMode.KeepAspectRatio,
+                                 Qt.TransformationMode.SmoothTransformation))
+        logo.setStyleSheet("background:transparent;padding:8px 0;")
+        lay.addWidget(logo)
+
+        brand = HW.get("brand","legion").upper() if HW else "LEGION"
+        model = HW.get("model","Lenovo Legion 5 15ACH6H") if HW else "Lenovo Legion 5 15ACH6H"
+
         for label, value in [
-            ("App","Legion Linux Toolkit"),("Version","v0.6.1 - BETA 20260320"),
-            ("Model","Lenovo Legion 5 15ACH6H"),("CPU","AMD Ryzen 7 5800H"),
-            ("OS","CachyOS (Arch-based)"),("Desktop","KDE Plasma 6 (Wayland)"),
-            ("Driver","ideapad_acpi + legion (WMI)"),("Fan ctrl","legion_hwmon"),
+            ("App",     "Legion Linux Toolkit"),
+            ("Version", "v0.6.1 - BETA 20260320"),
+            ("Brand",   brand),
+            ("Model",   model),
+            ("OS",      "CachyOS (Arch-based)"),
+            ("Desktop", "KDE Plasma 6 (Wayland)"),
+            ("Driver",  "ideapad_acpi + lenovo_legion_laptop"),
+            ("Fan ctrl","legion_hwmon"),
             ("Profiles","platform_profile (ACPI)"),
-            ("AI Engine","Native sysfs / EPP fallback"),
-            ("Config","~/.config/legion-toolkit/"),
+            ("Config",  "~/.config/legion-toolkit/"),
+            ("GitHub",  "github.com/v4cachy/legion-linux-toolkit"),
         ]:
             lay.addWidget(InfoRow(label, value))
         root.addWidget(card); root.addStretch()
@@ -4153,15 +4964,24 @@ class LegionDashboard(QMainWindow):
         main = QHBoxLayout(rw); main.setContentsMargins(0,0,0,0); main.setSpacing(0)
 
         # Sidebar
-        sb = QWidget(); sb.setFixedWidth(92)
-        sb.setStyleSheet(f"background:{C_SIDEBAR};")
-        sbl = QVBoxLayout(sb); sbl.setContentsMargins(0,8,0,8); sbl.setSpacing(0)
-        logo = QLabel("⚡"); logo.setFixedHeight(44)
-        logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        logo.setStyleSheet(f"font-size:22px;color:{C_ACCENT};letter-spacing:0px;")
-        sbl.addWidget(logo)
+        sb = QWidget(); sb.setFixedWidth(96)
+        sb.setStyleSheet(f"background:{C_SIDEBAR};border-right:1px solid {C_BORDER};")
+        sbl = QVBoxLayout(sb); sbl.setContentsMargins(0,10,0,10); sbl.setSpacing(0)
+
+        # Logo at top of sidebar
+        import base64 as _b64
+        from PyQt6.QtGui import QPixmap as _QP2
+        _pm2 = _QP2(); _pm2.loadFromData(_b64.b64decode(_LEGION_ICON_B64))
+        sidebar_logo = QLabel()
+        sidebar_logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        sidebar_logo.setPixmap(_pm2.scaled(36, 44, Qt.AspectRatioMode.KeepAspectRatio,
+                                           Qt.TransformationMode.SmoothTransformation))
+        sidebar_logo.setFixedHeight(52)
+        sidebar_logo.setStyleSheet("background:transparent;")
+        sbl.addWidget(sidebar_logo)
+
         dv = QFrame(); dv.setFixedHeight(1)
-        dv.setStyleSheet(f"background:{C_BORDER};margin:0 8px;")
+        dv.setStyleSheet(f"background:{C_BORDER};margin:2px 10px;")
         sbl.addWidget(dv); sbl.addSpacing(4)
 
         self.nav_btns = []
@@ -4176,20 +4996,43 @@ class LegionDashboard(QMainWindow):
 
         # Right
         right = QVBoxLayout(); right.setContentsMargins(0,0,0,0); right.setSpacing(0)
-        topbar = QWidget(); topbar.setFixedHeight(52)
-        topbar.setStyleSheet(f"background:{C_SIDEBAR};border-bottom:1px solid {C_BORDER};")
-        tbl = QHBoxLayout(topbar); tbl.setContentsMargins(24,0,24,0)
+        topbar = QWidget(); topbar.setFixedHeight(56)
+        topbar.setStyleSheet(
+            f"background:{C_SIDEBAR};"
+            f"border-bottom:1px solid {C_BORDER};"
+        )
+        tbl = QHBoxLayout(topbar); tbl.setContentsMargins(20,0,20,0); tbl.setSpacing(0)
+
+        # Page title
         self.page_title = QLabel("Home")
-        self.page_title.setStyleSheet(f"color:{C_TEXT};font-size:16px;font-weight:bold;")
-        tbl.addWidget(self.page_title); tbl.addStretch()
-        self.badge = QLabel("—"); self._refresh_badge(rdsys(PLATFORM_PROFILE,"balanced"))
-        tbl.addWidget(self.badge)
+        self.page_title.setStyleSheet(
+            f"color:{C_TEXT};font-size:16px;font-weight:bold;letter-spacing:0.5px;")
+        tbl.addWidget(self.page_title)
+        tbl.addSpacing(8)
+
+        # Brand/model pill
+        _brand = HW.get("brand","legion").title() if HW else "Legion"
+        _model = HW.get("model","Unknown") if HW else "Unknown"
+        brand_lbl = QLabel(f"{_brand}  ·  {_model}")
+        brand_lbl.setStyleSheet(
+            f"color:{C_TEXT3};font-size:10px;"
+            f"background:{C_CARD2};border:1px solid {C_BORDER};"
+            f"border-radius:8px;padding:2px 10px;")
+        tbl.addWidget(brand_lbl)
+        tbl.addStretch()
+
+        # AC indicator
         self.ac_ind = QLabel("⚡ AC")
-        self.ac_ind.setStyleSheet(f"color:{C_TEXT3};font-size:11px;margin-left:12px;")
+        self.ac_ind.setStyleSheet(
+            f"color:{C_GREEN};font-size:11px;font-weight:bold;"
+            f"background:{C_CARD2};border:1px solid {C_BORDER};"
+            f"border-radius:8px;padding:2px 10px;margin-right:8px;")
         tbl.addWidget(self.ac_ind)
-        ml = QLabel("  Legion 5 15ACH6H  ·  Ryzen 7 5800H")
-        ml.setStyleSheet(f"color:{C_TEXT3};font-size:11px;margin-left:8px;")
-        tbl.addWidget(ml)
+
+        # Profile badge
+        self.badge = QLabel("—")
+        self._refresh_badge(rdsys(PLATFORM_PROFILE,"balanced"))
+        tbl.addWidget(self.badge)
         right.addWidget(topbar)
 
         self.stack = QStackedWidget()
@@ -4264,6 +5107,29 @@ def main():
     app = QApplication(sys.argv)
     app.setApplicationName("Legion Toolkit")
     app.setQuitOnLastWindowClosed(True)
+
+    # Load saved language
+    load_language()
+
+    # Load or run hardware detection
+    global HW
+    if FIRST_RUN_FLAG.exists():
+        # Returning user — load saved hardware profile silently
+        HW = load_hardware()
+        if not HW:
+            HW = detect_hardware()
+            save_hardware(HW)
+    else:
+        # First run — show wizard
+        wizard = FirstRunWizard()
+        wizard.exec()
+        HW = load_hardware()
+        if not HW:
+            HW = detect_hardware()
+            save_hardware(HW)
+        FIRST_RUN_FLAG.parent.mkdir(parents=True, exist_ok=True)
+        FIRST_RUN_FLAG.touch()
+
     win = LegionDashboard()
     win.show()
     sys.exit(app.exec())
