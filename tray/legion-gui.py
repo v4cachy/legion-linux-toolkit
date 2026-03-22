@@ -2757,6 +2757,7 @@ class HomePage(QWidget):
         root.addWidget(ss)
         root.addStretch()
         self._page_request_cb = None
+        self._sync_battery_cb = None   # set by LegionDashboard to sync Battery page
         self._ai_on = False
 
     def _request_page(self, idx):
@@ -2774,15 +2775,23 @@ class HomePage(QWidget):
 
     def _on_bat_combo(self, idx):
         """Battery Mode: 0=Normal 1=Conservation 2=Rapid"""
-        if idx == 0:   # Normal
+        if idx == 0:
             wrsys(CONSERVATION_MODE, "0"); wrsys(RAPID_CHARGE, "0")
             send_notif("Battery Mode", "Normal charging", "battery")
-        elif idx == 1: # Conservation
+            mode = "normal"
+        elif idx == 1:
             wrsys(CONSERVATION_MODE, "1"); wrsys(RAPID_CHARGE, "0")
             send_notif("Battery Mode", "Conservation — capped at ~60%", "battery")
-        elif idx == 2: # Rapid
+            mode = "conservation"
+        elif idx == 2:
             wrsys(RAPID_CHARGE, "1"); wrsys(CONSERVATION_MODE, "0")
             send_notif("Battery Mode", "Rapid Charge ON", "battery")
+            mode = "rapid"
+        else:
+            return
+        # Sync Battery page toggles if callback is set
+        if self._sync_battery_cb:
+            self._sync_battery_cb(mode)
 
     def _on_gpu_mode_combo(self, idx):
         """Apply GPU mode via envycontrol then notify user to reboot."""
@@ -2904,6 +2913,7 @@ class BatteryPage(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setStyleSheet(f"background:{C_BG};")
+        self._sync_home_cb = None   # set by LegionDashboard to sync Home combo
         self._build()
 
     def _build(self):
@@ -3044,6 +3054,29 @@ class BatteryPage(QWidget):
 
         root.addStretch()
 
+    def sync_charging(self, mode: str):
+        """
+        Called from HomePage when Battery Mode dropdown changes.
+        mode: 'normal' | 'conservation' | 'rapid'
+        Updates the charging toggles to match without re-writing sysfs.
+        """
+        is_normal       = (mode == "normal")
+        is_conservation = (mode == "conservation")
+        is_rapid        = (mode == "rapid")
+
+        # Update Normal toggle
+        self._normal_toggle._checked = is_normal
+        self._normal_toggle._cx = 22.0 if is_normal else 4.0
+        self._normal_toggle.update()
+
+        # Update Conservation + Rapid toggles
+        for key, state in [("conservation", is_conservation), ("rapid", is_rapid)]:
+            if key in self.charge_toggles:
+                tog = self.charge_toggles[key]
+                tog._checked = state
+                tog._cx = 22.0 if state else 4.0
+                tog.update()
+
     def _apply_tp_thresholds(self):
         start = self._tp_start.value()
         stop  = self._tp_stop.value()
@@ -3069,15 +3102,18 @@ class BatteryPage(QWidget):
 
     def _on_normal_toggle(self, val):
         if val:
-            # ON = set normal charging (turn off conservation + rapid)
             wrsys(CONSERVATION_MODE, "0")
             wrsys(RAPID_CHARGE, "0")
             if "conservation" in self.charge_toggles:
-                self.charge_toggles["conservation"].setChecked(False, write=False)
+                self.charge_toggles["conservation"]._checked = False
+                self.charge_toggles["conservation"]._cx = 4.0
+                self.charge_toggles["conservation"].update()
             if "rapid" in self.charge_toggles:
-                self.charge_toggles["rapid"].setChecked(False, write=False)
+                self.charge_toggles["rapid"]._checked = False
+                self.charge_toggles["rapid"]._cx = 4.0
+                self.charge_toggles["rapid"].update()
             send_notif("Charging Mode", "Normal charging — no limits", "battery")
-        # OFF state is informational only — user can enable conservation/rapid individually
+            if self._sync_home_cb: self._sync_home_cb(0)  # 0 = Normal
 
     def refresh(self, d=None):
         s = get_battery_stats()
@@ -5267,9 +5303,18 @@ class LegionDashboard(QMainWindow):
             DisplayPage(), KeyboardPage(), SystemPage(),
             OverclockPage(), FanPage(), ActionsPage(), AboutPage()
         ]
+        # Wire battery sync — Home combo updates Battery page toggles and vice versa
+        self.home_page._sync_battery_cb = self.pages[1].sync_charging
+        self.pages[1]._sync_home_cb = self._sync_bat_combo
         for pg in self.pages: self.stack.addWidget(pg)
         right.addWidget(self.stack); main.addLayout(right)
         self._switch(0)
+
+    def _sync_bat_combo(self, idx: int):
+        """Sync Home page battery combo when Battery page toggle changes."""
+        self.home_page.bat_combo.blockSignals(True)
+        self.home_page.bat_combo.setCurrentIndex(idx)
+        self.home_page.bat_combo.blockSignals(False)
 
     def _switch(self, idx):
         self.stack.setCurrentIndex(idx)
