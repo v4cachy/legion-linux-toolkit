@@ -917,39 +917,100 @@ def get_battery_stats():
     s["status"]  = get_battery_status()
     s["health"]  = get_battery_health()
     s["cycles"]  = rdsys(BAT/"cycle_count","—")
-    # Temperature — try BAT0/temp first, then acpi_batt hwmon, then k10temp
+
+    # ── Battery temperature — exhaustive scan ────────────────────────────────
     _bat_temp = None
-    try:
-        _t = int(rdsys(BAT/"temp", "-999"))
-        if _t > 0: _bat_temp = _t // 10   # BAT0/temp is in tenths of °C
-    except: pass
+
+    # 1. Direct BAT sysfs (some kernels expose this)
+    for bat_path in [BAT, Path("/sys/class/power_supply/BAT1"),
+                     Path("/sys/class/power_supply/CMB0")]:
+        for fname in ["temp", "temp_now"]:
+            try:
+                v = int((bat_path/fname).read_text().strip())
+                if v > 0:
+                    # Values can be in tenths of °C (273→27) or milli-°C
+                    _bat_temp = v // 10 if v > 1000 else v
+                    break
+            except: pass
+        if _bat_temp is not None: break
+
+    # 2. power_supply device symlink — real device path often has temp
     if _bat_temp is None:
-        # Try acpi_batt or bq27xxx hwmon (common on Lenovo)
-        for hwmon_name in ["acpi_batt", "bq27xxx", "battery", "BAT0"]:
-            h = find_hwmon(hwmon_name)
-            if h:
-                for f in sorted(h.glob("temp*_input")):
-                    try:
-                        v = int(f.read_text()) // 1000
-                        if 10 < v < 70: _bat_temp = v; break
-                    except: pass
-            if _bat_temp is not None: break
-    if _bat_temp is None:
-        # Last resort: scan all hwmon for a battery-range temp
         try:
-            for hwmon in Path("/sys/class/hwmon").iterdir():
-                name_f = hwmon / "name"
-                if not name_f.exists(): continue
-                if any(k in name_f.read_text().strip().lower()
-                       for k in ("bat","acpi","power")):
-                    for f in sorted(hwmon.glob("temp*_input")):
-                        try:
-                            v = int(f.read_text()) // 1000
-                            if 10 < v < 70: _bat_temp = v; break
-                        except: pass
+            real = Path("/sys/class/power_supply/BAT0").resolve()
+            for fname in ["temp", "temp_now", "uevent"]:
+                p = real / fname
+                if fname == "uevent" and p.exists():
+                    # parse POWER_SUPPLY_TEMP= from uevent
+                    for line in p.read_text().splitlines():
+                        if "TEMP=" in line:
+                            try:
+                                v = int(line.split("=")[1].strip())
+                                if v > 0:
+                                    _bat_temp = v // 10 if v > 1000 else v
+                            except: pass
+                elif p.exists():
+                    try:
+                        v = int(p.read_text().strip())
+                        if v > 0:
+                            _bat_temp = v // 10 if v > 1000 else v
+                            break
+                    except: pass
+        except: pass
+
+    # 3. hwmon scan — look for battery/acpi named hwmon devices
+    if _bat_temp is None:
+        try:
+            for hwmon in sorted(Path("/sys/class/hwmon").iterdir()):
+                try:
+                    name = (hwmon/"name").read_text().strip().lower()
+                except: name = ""
+                if not any(k in name for k in
+                           ("bat","acpi","power","bq","max","lenovo","smbus")):
+                    continue
+                for f in sorted(hwmon.glob("temp*_input")):
+                    try:
+                        v = int(f.read_text().strip()) // 1000
+                        if 10 < v < 80:
+                            _bat_temp = v; break
+                    except: pass
                 if _bat_temp is not None: break
         except: pass
+
+    # 4. Scan ALL hwmon for a temp in battery range (20–55°C realistic)
+    if _bat_temp is None:
+        try:
+            for hwmon in sorted(Path("/sys/class/hwmon").iterdir()):
+                try: name = (hwmon/"name").read_text().strip().lower()
+                except: name = ""
+                # Skip CPU/GPU hwmon — not battery temps
+                if any(k in name for k in ("k10temp","coretemp","nct","asus",
+                                           "it8","gpu","nouveau","radeon","amdgpu")):
+                    continue
+                for f in sorted(hwmon.glob("temp*_input")):
+                    try:
+                        v = int(f.read_text().strip()) // 1000
+                        if 20 < v < 55:  # realistic battery temp range
+                            _bat_temp = v; break
+                    except: pass
+                if _bat_temp is not None: break
+        except: pass
+
+    # 5. ACPI thermal zone — last resort
+    if _bat_temp is None:
+        try:
+            for tz in sorted(Path("/sys/class/thermal").glob("thermal_zone*")):
+                try:
+                    ttype = (tz/"type").read_text().strip().lower()
+                    if any(k in ttype for k in ("bat","acpi","charger")):
+                        v = int((tz/"temp").read_text().strip()) // 1000
+                        if 10 < v < 80:
+                            _bat_temp = v; break
+                except: pass
+        except: pass
+
     s["temp"] = f"{_bat_temp} °C" if _bat_temp is not None else "—"
+
     try: s["power"] = f"{int(rdsys(BAT/'power_now','0'))/1_000_000:.1f} W"
     except: s["power"] = "—"
     try: s["voltage"] = f"{int(rdsys(BAT/'voltage_now','0'))/1_000_000:.2f} V"
