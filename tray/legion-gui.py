@@ -2243,7 +2243,7 @@ class ToggleSwitch(QWidget):
 
     def isChecked(self): return self._checked
 
-    def setChecked(self, val, write=True, notify_title=None, notify_on=None, notify_off=None):
+    def setChecked(self, val, write=True, notify_title=None, notify_on=None, notify_off=None, silent=False):
         self._checked = val
         self._anim.stop()
         self._anim.setStartValue(self._cx)
@@ -2251,11 +2251,11 @@ class ToggleSwitch(QWidget):
         self._anim.start(); self.update()
         if write and self.path:
             wrsys(self.path, "1" if val else "0")
-        if notify_title:
+        if notify_title and not silent:
             body = notify_on if val else notify_off or ""
-            icon = "dialog-information"
-            send_notif(notify_title, body, icon)
-        if self.on_change: self.on_change(val)
+            send_notif(notify_title, body, "dialog-information")
+        if self.on_change and not silent:
+            self.on_change(val)
 
     def mousePressEvent(self, e): self.setChecked(not self._checked)
 
@@ -2998,21 +2998,25 @@ class BatteryPage(QWidget):
             # Build on_change callback that syncs the Home combo
             def _make_cb(k):
                 def _cb(val):
-                    if not self._sync_home_cb: return
                     if k == "conservation" and val:
-                        self._sync_home_cb(1)   # Conservation
-                        # Turn off Normal toggle visually
-                        self._normal_toggle.setChecked(False, write=False)
+                        wrsys(RAPID_CHARGE, "0")
+                        if "rapid" in self.charge_toggles:
+                            self.charge_toggles["rapid"].setChecked(False, write=False, silent=True)
+                        self._normal_toggle.setChecked(False, write=False, silent=True)
+                        if self._sync_home_cb: self._sync_home_cb(1)
                     elif k == "rapid" and val:
-                        self._sync_home_cb(2)   # Rapid
-                        self._normal_toggle.setChecked(False, write=False)
+                        wrsys(CONSERVATION_MODE, "0")
+                        if "conservation" in self.charge_toggles:
+                            self.charge_toggles["conservation"].setChecked(False, write=False, silent=True)
+                        self._normal_toggle.setChecked(False, write=False, silent=True)
+                        if self._sync_home_cb: self._sync_home_cb(2)
                     elif not val:
-                        # Toggled OFF — if neither conservation nor rapid, go Normal
-                        cons = rdsys(CONSERVATION_MODE,"0")
-                        rapid = rdsys(RAPID_CHARGE,"0")
+                        # Turned off — check if both now off → Normal
+                        cons  = rdsys(CONSERVATION_MODE, "0")
+                        rapid = rdsys(RAPID_CHARGE, "0")
                         if cons == "0" and rapid == "0":
-                            self._sync_home_cb(0)
-                            self._normal_toggle.setChecked(True, write=False)
+                            self._normal_toggle.setChecked(True, write=False, silent=True)
+                            if self._sync_home_cb: self._sync_home_cb(0)
                 return _cb
 
             nt = NotifyToggle(title, desc, path,
@@ -3076,22 +3080,12 @@ class BatteryPage(QWidget):
         root.addStretch()
 
     def sync_charging(self, mode: str):
-        """
-        Called from HomePage when Battery Mode dropdown changes.
-        mode: 'normal' | 'conservation' | 'rapid'
-        Updates toggles visually without re-writing sysfs.
-        """
-        is_normal       = (mode == "normal")
-        is_conservation = (mode == "conservation")
-        is_rapid        = (mode == "rapid")
-
-        # Update Normal toggle (silent — no write, no callback)
-        self._normal_toggle.setChecked(is_normal, write=False)
-
-        # Update Conservation, Rapid toggles
-        for key, state in [("conservation", is_conservation), ("rapid", is_rapid)]:
-            if key in self.charge_toggles:
-                self.charge_toggles[key].setChecked(state, write=False)
+        """Called from HomePage combo — updates toggles silently (no callbacks, no sysfs writes)."""
+        self._normal_toggle.setChecked(mode == "normal",       write=False, silent=True)
+        if "conservation" in self.charge_toggles:
+            self.charge_toggles["conservation"].setChecked(mode == "conservation", write=False, silent=True)
+        if "rapid" in self.charge_toggles:
+            self.charge_toggles["rapid"].setChecked(mode == "rapid",        write=False, silent=True)
 
     def _apply_tp_thresholds(self):
         start = self._tp_start.value()
@@ -3121,15 +3115,11 @@ class BatteryPage(QWidget):
             wrsys(CONSERVATION_MODE, "0")
             wrsys(RAPID_CHARGE, "0")
             if "conservation" in self.charge_toggles:
-                self.charge_toggles["conservation"]._checked = False
-                self.charge_toggles["conservation"]._cx = 4.0
-                self.charge_toggles["conservation"].update()
+                self.charge_toggles["conservation"].setChecked(False, write=False, silent=True)
             if "rapid" in self.charge_toggles:
-                self.charge_toggles["rapid"]._checked = False
-                self.charge_toggles["rapid"]._cx = 4.0
-                self.charge_toggles["rapid"].update()
+                self.charge_toggles["rapid"].setChecked(False, write=False, silent=True)
             send_notif("Charging Mode", "Normal charging — no limits", "battery")
-            if self._sync_home_cb: self._sync_home_cb(0)  # 0 = Normal
+            if self._sync_home_cb: self._sync_home_cb(0)
 
     def refresh(self, d=None):
         s = get_battery_stats()
