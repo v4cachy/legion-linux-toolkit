@@ -1,26 +1,26 @@
 #!/usr/bin/env python3
 """
-Legion Linux Toolkit — Daemon
-Hardware: Lenovo Legion 5 15ACH6H | Ryzen 7 5800H | CachyOS
+Legion Linux Toolkit — Core Daemon
+====================================
+Watches /sys/firmware/acpi/platform_profile for changes (triggered by Fn+Q
+or by the CLI tool) and applies the full profile — governor, boost, TDP,
+fan mode, and battery settings.
 
-Responsibilities:
-  • Apply CPU governor / boost / EPP / fan on profile change
-  • Watch /sys/firmware/acpi/platform_profile (Fn+Q triggers this)
-  • Unix socket at /run/legion-toolkit.sock for GUI commands
-  • Send desktop notifications on profile change
-
-Profile name note: this machine's firmware uses "low-power" for the quiet
-profile. The daemon accepts both "quiet" and "low-power" as input, always
-writing the actual firmware value to sysfs.
+Hardware: Lenovo Legion 5 15ACH6H | AMD Ryzen 7 5800H | CachyOS
 """
 
-import os, sys, time, signal, logging, subprocess, socket, threading, glob
+import os
+import sys
+import time
+import logging
+import signal
+import subprocess
 from pathlib import Path
 
 # ── Logging ────────────────────────────────────────────────────────────────────
 logging.basicConfig(
     level=logging.INFO,
-    format="[%(asctime)s] %(levelname)s %(message)s",
+    format="[%(asctime)s] %(levelname)s  %(message)s",
     datefmt="%H:%M:%S",
     handlers=[
         logging.StreamHandler(sys.stdout),
@@ -29,224 +29,356 @@ logging.basicConfig(
 )
 log = logging.getLogger("legion")
 
-# ── sysfs paths ───────────────────────────────────────────────────────────────
-PLATFORM_PROFILE         = Path("/sys/firmware/acpi/platform_profile")
-PLATFORM_PROFILE_CHOICES = Path("/sys/firmware/acpi/platform_profile_choices")
-AMD_BOOST                = Path("/sys/devices/system/cpu/cpufreq/boost")
-RAPL_PL1                 = Path("/sys/class/powercap/intel-rapl:0/constraint_0_power_limit_uw")
-RAPL_PL2                 = Path("/sys/class/powercap/intel-rapl:0/constraint_1_power_limit_uw")
-GOVERNOR_GLOB            = "/sys/devices/system/cpu/cpu*/cpufreq/scaling_governor"
-EPP_GLOB                 = "/sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference"
-IDEAPAD_BASE             = Path("/sys/bus/platform/drivers/ideapad_acpi/VPC2004:00")
-FAN_MODE                 = IDEAPAD_BASE / "fan_mode"
-CONSERVATION_MODE        = IDEAPAD_BASE / "conservation_mode"
-CAMERA_POWER             = IDEAPAD_BASE / "camera_power"
-FN_LOCK                  = IDEAPAD_BASE / "fn_lock"
-USB_CHARGING             = IDEAPAD_BASE / "usb_charging"
-RAPID_CHARGE             = Path("/sys/devices/pci0000:00/0000:00:14.3/PNP0C09:00/rapidcharge")
-SOCKET_PATH              = Path("/run/legion-toolkit.sock")
+# ── RAPL writability check ────────────────────────────────────────────────────
+# _RAPL_WARNED flag ensures the full install hint only prints ONCE per process.
+# CLI one-shot calls get a silent skip; daemon startup gets the full warning.
+_RAPL_WRITABLE: bool | None = None
+_RAPL_WARNED:   bool        = False
 
-# ── Profile settings ──────────────────────────────────────────────────────────
-# Keys here must match what we accept from GUI / CLI.
-# "low-power" = what this machine's firmware actually calls it.
-# "quiet" is an alias handled in _to_fw() below.
+def _check_rapl(verbose: bool = False) -> bool:
+    global _RAPL_WRITABLE, _RAPL_WARNED
+    if _RAPL_WRITABLE is not None:
+        return _RAPL_WRITABLE
+    if RAPL_PL1.exists() and os.access(RAPL_PL1, os.W_OK):
+        _RAPL_WRITABLE = True
+        log.info("  ✓ RAPL TDP control available")
+    else:
+        _RAPL_WRITABLE = False
+        if verbose and not _RAPL_WARNED:
+            log.warning("  ⚠ RAPL not writable — TDP limits will be skipped")
+            log.warning("    → To enable TDP control on your Ryzen 7 5800H:")
+            log.warning("    → yay -S ryzen_smu-dkms-git && sudo modprobe ryzen_smu")
+            log.warning("    → Then: sudo systemctl restart legion-toolkit")
+            _RAPL_WARNED = True
+    return _RAPL_WRITABLE
+PLATFORM_PROFILE        = Path("/sys/firmware/acpi/platform_profile")
+PLATFORM_PROFILE_CHOICES= Path("/sys/firmware/acpi/platform_profile_choices")
+
+# ── Dynamic sysfs path detection (works across all Lenovo models) ─────────────
+def _find_ideapad_base() -> Path:
+    root = Path("/sys/bus/platform/drivers/ideapad_acpi")
+    if root.exists():
+        try:
+            for d in root.iterdir():
+                if any((d/f).exists() for f in ["conservation_mode","fn_lock","fan_mode"]):
+                    return d
+        except: pass
+    return Path("/sys/bus/platform/drivers/ideapad_acpi/VPC2004:00")
+
+def _find_legion_feature(name: str) -> Path:
+    """Find a legion_laptop feature file anywhere in sysfs (any PCI slot, any model)."""
+    # Try all PNP0C09 devices under any PCI bus
+    try:
+        for p in Path("/sys/devices").glob("pci*/*/*/PNP0C09:*"):
+            f = p / name
+            if f.exists(): return f
+    except: pass
+    # Try legion driver binding
+    for base in [Path("/sys/bus/platform/drivers/legion"),
+                 Path("/sys/module/legion_laptop/drivers/platform:legion")]:
+        if base.exists():
+            try:
+                for d in base.iterdir():
+                    f = d / name
+                    if f.exists(): return f
+            except: pass
+    return Path(f"/tmp/nonexistent_{name}")
+
+IDEAPAD_BASE    = _find_ideapad_base()
+FAN_MODE        = IDEAPAD_BASE / "fan_mode"
+CONSERVATION_MODE = IDEAPAD_BASE / "conservation_mode"
+CAMERA_POWER    = IDEAPAD_BASE / "camera_power"
+FN_LOCK         = IDEAPAD_BASE / "fn_lock"
+USB_CHARGING    = IDEAPAD_BASE / "usb_charging"
+RAPID_CHARGE    = _find_legion_feature("rapidcharge")
+
+# AMD boost (Ryzen 7 5800H)
+AMD_BOOST               = Path("/sys/devices/system/cpu/cpufreq/boost")
+
+# RAPL — AMD exposes via intel-rapl interface on this machine
+RAPL_PL1                = Path("/sys/class/powercap/intel-rapl:0/constraint_0_power_limit_uw")
+RAPL_PL2                = Path("/sys/class/powercap/intel-rapl:0/constraint_1_power_limit_uw")
+
+# CPU governor paths
+GOVERNOR_GLOB           = "/sys/devices/system/cpu/cpu*/cpufreq/scaling_governor"
+EPP_GLOB                = "/sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference"
+MAX_FREQ_GLOB           = "/sys/devices/system/cpu/cpu[0-9]*/cpufreq/scaling_max_freq"
+CPUINFO_MAX_GLOB        = "/sys/devices/system/cpu/cpu[0-9]*/cpufreq/cpuinfo_max_freq"
+
+# Fan hwmon — legion_hwmon confirmed at hwmon5, but number can change on reboot
+# Detect dynamically
+def find_hwmon(name: str) -> Path | None:
+    for p in Path("/sys/class/hwmon").iterdir():
+        try:
+            if (p / "name").read_text().strip() == name:
+                return p
+        except Exception:
+            continue
+    return None
+
+
+# ── Profile definitions ────────────────────────────────────────────────────────
+# Values tuned for Ryzen 7 5800H (cTDP range: 35W–54W, base 45W)
 PROFILES = {
-    "low-power": {
-        "label":       "Quiet",
-        "description": "Silent · 15W · Boost OFF",
-        "governor":    "powersave",
-        "boost":       "0",
-        "epp":         "power",
-        "pl1_uw":      15_000_000,
-        "pl2_uw":      20_000_000,
-        "fan_mode":    "0",
+    "quiet": {
+        "governor":     "powersave",
+        "boost":        "0",           # AMD boost OFF — confirmed from Windows LLT
+        "rapl_pl1_uw":  15_000_000,    # 15W sustained
+        "rapl_pl2_uw":  20_000_000,    # 20W burst
+        "fan_mode":     "0",           # auto
+        "description":  "Quiet — silent, 15W, boost off",
     },
     "balanced": {
-        "label":       "Balanced",
-        "description": "Everyday · 35W · Boost ON",
-        "governor":    "powersave",
-        "boost":       "1",
-        "epp":         "balance_performance",
-        "pl1_uw":      35_000_000,
-        "pl2_uw":      54_000_000,
-        "fan_mode":    "0",
+        "governor":     "powersave",   # powersave + boost=on = schedutil equivalent on AMD
+        "boost":        "1",
+        "rapl_pl1_uw":  35_000_000,    # 35W sustained
+        "rapl_pl2_uw":  54_000_000,    # 54W burst (5800H max cTDP)
+        "fan_mode":     "0",           # auto
+        "description":  "Balanced — 35W, boost on, auto fan",
     },
     "balanced-performance": {
-        "label":       "Performance",
-        "description": "Gaming · 45W · Boost ON",
-        "governor":    "performance",
-        "boost":       "1",
-        "epp":         "performance",
-        "pl1_uw":      45_000_000,
-        "pl2_uw":      54_000_000,
-        "fan_mode":    "0",
+        "governor":     "performance",
+        "boost":        "1",
+        "rapl_pl1_uw":  45_000_000,    # 45W sustained
+        "rapl_pl2_uw":  54_000_000,    # 54W burst
+        "fan_mode":     "0",           # auto
+        "description":  "Balanced-Performance — 45W, boost on",
     },
     "performance": {
-        "label":       "Custom",
-        "description": "Max Power · 54W · Boost ON",
-        "governor":    "performance",
-        "boost":       "1",
-        "epp":         "performance",
-        "pl1_uw":      54_000_000,
-        "pl2_uw":      54_000_000,
-        "fan_mode":    "0",
+        "governor":     "performance",
+        "boost":        "1",
+        "rapl_pl1_uw":  54_000_000,    # 54W — full cTDP
+        "rapl_pl2_uw":  54_000_000,
+        "fan_mode":     "0",           # auto
+        "description":  "Performance — 54W, boost on, full speed",
     },
 }
 
-# Alias map: accept "quiet" from GUI/CLI, translate to firmware "low-power"
-_ALIASES = {"quiet": "low-power"}
-
-def _to_fw(name: str) -> str:
-    """Translate alias or unknown name to the exact firmware profile name."""
-    name = name.strip()
-    if name in PROFILES:
-        return name
-    if name in _ALIASES:
-        return _ALIASES[name]
-    # Try to find a firmware match from actual choices
+# ── Helpers ────────────────────────────────────────────────────────────────────
+def write(path: Path, value: str, label: str) -> bool:
     try:
-        choices = PLATFORM_PROFILE_CHOICES.read_text().strip().split()
-        if name in choices:
-            return name
-        for c in choices:
-            if name in c or c in name:
-                return c
-    except Exception:
-        pass
-    return name  # best effort
+        if path.exists() and os.access(path, os.W_OK):
+            path.write_text(str(value))
+            log.info(f"  ✓ {label} → {value}")
+            return True
+        else:
+            log.warning(f"  ⚠ Not writable: {label} ({path})")
+            return False
+    except Exception as e:
+        log.warning(f"  ⚠ Failed {label}: {e}")
+        return False
+
+
+def write_glob(pattern: str, value: str, label: str) -> bool:
+    import glob
+    paths = glob.glob(pattern)
+    if not paths:
+        log.warning(f"  ⚠ No paths found for: {label}")
+        return False
+    success = 0
+    for p in paths:
+        try:
+            if os.access(p, os.W_OK):
+                Path(p).write_text(value)
+                success += 1
+        except Exception:
+            pass
+    if success > 0:
+        log.info(f"  ✓ {label} → {value}  ({success} cores)")
+        return True
+    log.warning(f"  ⚠ Could not write {label}")
+    return False
+
+
+def restore_max_freq():
+    """Restore all CPU cores to their hardware-maximum frequency."""
+    import glob
+    for cpu_dir in glob.glob("/sys/devices/system/cpu/cpu[0-9]*/cpufreq"):
+        max_path = Path(cpu_dir) / "scaling_max_freq"
+        hw_max_path = Path(cpu_dir) / "cpuinfo_max_freq"
+        try:
+            if max_path.exists() and hw_max_path.exists() and os.access(max_path, os.W_OK):
+                hw_max = hw_max_path.read_text().strip()
+                max_path.write_text(hw_max)
+        except Exception:
+            pass
+    log.info("  ✓ CPU max frequency → restored to hardware max")
+
 
 def get_current_profile() -> str:
     try:
         return PLATFORM_PROFILE.read_text().strip()
     except Exception:
-        return "balanced"
+        return "unknown"
 
-def get_choices() -> list[str]:
+
+def get_available_profiles() -> list[str]:
     try:
         return PLATFORM_PROFILE_CHOICES.read_text().strip().split()
     except Exception:
         return list(PROFILES.keys())
 
-# ── sysfs write helpers ────────────────────────────────────────────────────────
-def _write(path: Path, value: str, label: str) -> bool:
-    try:
-        if not path.exists():
-            log.warning(f"  ✗ {label}: path missing ({path})")
-            return False
-        if not os.access(path, os.W_OK):
-            log.warning(f"  ✗ {label}: not writable ({path})")
-            return False
-        path.write_text(str(value))
-        log.info(f"  ✓ {label} → {value}")
-        return True
-    except Exception as e:
-        log.warning(f"  ✗ {label}: {e}")
-        return False
 
-def _write_glob(pattern: str, value: str, label: str) -> int:
-    paths = glob.glob(pattern)
-    ok = 0
-    for p in paths:
-        try:
-            if os.access(p, os.W_OK):
-                Path(p).write_text(value)
-                ok += 1
-        except Exception:
-            pass
-    if ok:
-        log.info(f"  ✓ {label} → {value}  ({ok} cores)")
-    else:
-        log.warning(f"  ✗ {label}: no writable paths found")
-    return ok
-
-def _restore_max_freq():
-    for cpu_dir in glob.glob("/sys/devices/system/cpu/cpu[0-9]*/cpufreq"):
-        try:
-            hw = (Path(cpu_dir) / "cpuinfo_max_freq").read_text().strip()
-            mx = Path(cpu_dir) / "scaling_max_freq"
-            if mx.exists() and os.access(mx, os.W_OK):
-                mx.write_text(hw)
-        except Exception:
-            pass
-
-def _rapl_available() -> bool:
-    return RAPL_PL1.exists() and os.access(RAPL_PL1, os.W_OK)
-
-# ── Apply profile ──────────────────────────────────────────────────────────────
-def apply_profile(raw_name: str):
-    """Apply all settings for a profile. Accepts alias names like 'quiet'."""
-    fw_name = _to_fw(raw_name)
-
-    if fw_name not in PROFILES:
-        log.error(f"Unknown profile: {raw_name!r} (resolved: {fw_name!r})")
-        log.error(f"Available: {', '.join(PROFILES.keys())}")
+# ── Apply a profile ────────────────────────────────────────────────────────────
+def apply_profile(profile_name: str):
+    if profile_name not in PROFILES:
+        log.error(f"Unknown profile: {profile_name}")
+        log.error(f"Available: {', '.join(get_available_profiles())}")
         return
 
-    p = PROFILES[fw_name]
-    log.info("")
-    log.info(f"══ {p['label']} ({fw_name}) ══  {p['description']}")
-    log.info("")
+    p = PROFILES[profile_name]
+    log.info(f"")
+    log.info(f"══ Applying profile: {profile_name.upper()} ══")
+    log.info(f"   {p['description']}")
+    log.info(f"")
 
-    # 1. Write platform_profile — use EXACT firmware name
-    _write(PLATFORM_PROFILE, fw_name, "platform_profile")
+    # 1. Platform profile (tells firmware + LLL)
+    write(PLATFORM_PROFILE, profile_name, "platform_profile")
 
-    # 2. Restore CPU max freq (clear any cap from previous profile)
-    _restore_max_freq()
-    log.info("  ✓ CPU max freq → hardware max")
+    # 2. Restore CPU max freq first (clears any previous cap)
+    restore_max_freq()
 
-    # 3. CPU governor
-    _write_glob(GOVERNOR_GLOB, p["governor"], f"governor")
+    # 3. CPU governor (AMD: performance or powersave only)
+    write_glob(GOVERNOR_GLOB, p["governor"], "CPU governor")
 
     # 4. AMD boost
-    _write(AMD_BOOST, p["boost"], "AMD boost")
+    write(AMD_BOOST, p["boost"], "AMD boost")
 
-    # 5. EPP
-    _write_glob(EPP_GLOB, p["epp"], "EPP")
+    # 5. Energy performance preference (may not exist on all AMD configs)
+    epp_val = "power" if p["governor"] == "powersave" and p["boost"] == "0" else \
+              "balance_performance" if p["governor"] == "powersave" else "performance"
+    write_glob(EPP_GLOB, epp_val, "Energy perf preference")
 
-    # 6. RAPL TDP (optional — needs ryzen_smu)
-    if _rapl_available():
-        _write(RAPL_PL1, str(p["pl1_uw"]), f"TDP PL1 ({p['pl1_uw']//1_000_000}W)")
-        _write(RAPL_PL2, str(p["pl2_uw"]), f"TDP PL2 ({p['pl2_uw']//1_000_000}W)")
+    # 6. RAPL TDP limits — only attempt if writable
+    if _check_rapl(verbose=False):
+        write(RAPL_PL1, str(p["rapl_pl1_uw"]), f"CPU TDP PL1 ({p['rapl_pl1_uw']//1_000_000}W)")
+        write(RAPL_PL2, str(p["rapl_pl2_uw"]), f"CPU TDP PL2 ({p['rapl_pl2_uw']//1_000_000}W)")
     else:
-        log.info("  ⏭ TDP skipped (install ryzen_smu-dkms-git to enable)")
+        log.info(f"  ⏭ TDP skipped (install ryzen_smu-dkms-git to enable)")
 
-    # 7. Fan mode
-    _write(FAN_MODE, p["fan_mode"], "fan_mode")
+    # 7. Fan mode via ideapad_acpi
+    write(FAN_MODE, p["fan_mode"], "Fan mode")
 
-    # 8. Thermal mode LED indicator (lenovo-legion-linux driver)
-    # This controls the profile indicator light on the laptop:
-    # 0 = quiet/blue-dim, 1 = balanced/white, 2 = performance+, 3 = performance
-    _thermalmode = {
-        "low-power":            "0",
-        "balanced":             "1",
-        "balanced-performance": "2",
-        "performance":          "3",
-    }
-    _LEGION_BASE = Path("/sys/devices/pci0000:00/0000:00:14.3/PNP0C09:00")
-    _thermal_path = _LEGION_BASE / "thermalmode"
-    if _thermal_path.exists() and fw_name in _thermalmode:
-        _write(_thermal_path, _thermalmode[fw_name], "thermalmode LED")
+    # 8. Status summary
+    log.info(f"")
+    log.info(f"  Profile  : {get_current_profile()}")
+    log.info(f"  Governor : {Path('/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor').read_text().strip() if Path('/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor').exists() else 'N/A'}")
+    log.info(f"  Boost    : {AMD_BOOST.read_text().strip() if AMD_BOOST.exists() else 'N/A'}")
+    log.info(f"  Temp     : {_read_temp()} °C")
+    log.info(f"")
 
-    log.info("")
 
-# ── Desktop notification ───────────────────────────────────────────────────────
-def _notify(fw_name: str):
-    # Labels match Windows Legion software / LenovoLegionLinux
-    _labels = {
-        "low-power":            "🔵 Quiet",
-        "balanced":             "⚪ Balanced",
-        "balanced-performance": "🟠 Performance",
-        "performance":          "🩷 Custom",
-    }
-    p = PROFILES.get(fw_name, {})
-    label = _labels.get(fw_name, p.get("label", fw_name))
-    desc  = p.get("description", "")
-    icons = {
-        "low-power":            "battery-caution",
-        "balanced":             "battery-good",
-        "balanced-performance": "battery-full-charged",
-        "performance":          "utilities-system-monitor",
-    }
+def _read_temp() -> str:
+    hwmon = find_hwmon("k10temp")
+    if hwmon:
+        temp_path = hwmon / "temp1_input"
+        try:
+            return str(int(int(temp_path.read_text().strip()) / 1000))
+        except Exception:
+            pass
+    return "N/A"
+
+
+# ── Daemon: watch platform_profile for changes (triggered by Fn+Q or CLI) ─────
+class ProfileWatcher:
+    def __init__(self):
+        self._last_profile = None
+        self._running = True
+        signal.signal(signal.SIGTERM, self._stop)
+        signal.signal(signal.SIGINT, self._stop)
+
+    def _stop(self, *_):
+        log.info("Legion daemon stopping...")
+        self._running = False
+
+    def run(self):
+        log.info("Legion Linux Toolkit daemon started")
+        log.info(f"Watching: {PLATFORM_PROFILE}")
+        log.info(f"Available profiles: {' | '.join(get_available_profiles())}")
+
+        # Check RAPL once at daemon startup with full install hint
+        _check_rapl(verbose=True)
+
+        # Apply current profile on startup
+        current = get_current_profile()
+        log.info(f"Startup profile: {current}")
+        apply_profile(current)
+        self._last_profile = current
+
+        # Start Unix socket server in background thread
+        import threading as _th
+        _th.Thread(target=self._socket_server, daemon=True).start()
+
+        while self._running:
+            try:
+                current = get_current_profile()
+                if current != self._last_profile:
+                    log.info(f"Profile changed: {self._last_profile} → {current}")
+                    apply_profile(current)
+                    self._last_profile = current
+                    _notify(current)
+            except Exception as e:
+                log.error(f"Watcher error: {e}")
+            time.sleep(0.5)
+
+    def _socket_server(self):
+        """Unix socket server — handles write:/set:/get: from the GUI."""
+        import socket as _sock
+        SOCK_PATH = "/run/legion-toolkit.sock"
+        try: os.unlink(SOCK_PATH)
+        except: pass
+        srv = _sock.socket(_sock.AF_UNIX, _sock.SOCK_STREAM)
+        srv.bind(SOCK_PATH)
+        os.chmod(SOCK_PATH, 0o666)
+        srv.listen(8)
+        log.info(f"Socket server listening at {SOCK_PATH}")
+        while True:
+            try:
+                conn, _ = srv.accept()
+                import threading as _th
+                _th.Thread(target=self._handle_client, args=(conn,), daemon=True).start()
+            except Exception as e:
+                log.debug(f"Socket accept error: {e}")
+
+    def _handle_client(self, conn):
+        try:
+            data = conn.recv(4096).decode().strip()
+            if data.startswith("set:"):
+                profile = data[4:].strip()
+                if profile in PROFILES or profile in get_available_profiles():
+                    apply_profile(profile)
+                    conn.send(b"ok\n")
+                else:
+                    conn.send(b"err:unknown profile\n")
+            elif data.startswith("write:"):
+                # write:path:value
+                parts = data[6:].split(":", 1)
+                if len(parts) == 2:
+                    path, value = parts[0].strip(), parts[1].strip()
+                    try:
+                        Path(path).write_text(value + "\n")
+                        conn.send(b"ok\n")
+                    except Exception as e:
+                        conn.send(f"err:{e}\n".encode())
+                else:
+                    conn.send(b"err:bad format\n")
+            elif data.startswith("get:profile"):
+                conn.send(f"{get_current_profile()}\n".encode())
+            elif data.startswith("get:choices"):
+                conn.send(f"{' '.join(get_available_profiles())}\n".encode())
+            else:
+                conn.send(b"err:unknown command\n")
+        except Exception as e:
+            log.debug(f"Client error: {e}")
+        finally:
+            try: conn.close()
+            except: pass
+
+
+def _get_user_session() -> tuple[str, str, str] | None:
+    """
+    Find the logged-in user's username, DISPLAY and DBUS_SESSION_BUS_ADDRESS.
+    """
     try:
         result = subprocess.run(
             ["loginctl", "list-sessions", "--no-legend"],
@@ -256,218 +388,151 @@ def _notify(fw_name: str):
             parts = line.split()
             if len(parts) < 3:
                 continue
-            session_id, uid, username = parts[0], parts[1], parts[2]
-            stype = subprocess.run(
+            session_id = parts[0]
+            uid        = parts[1]
+            username   = parts[2]  # actual username e.g. "ryoutaorita"
+
+            session_type = subprocess.run(
                 ["loginctl", "show-session", session_id, "-p", "Type", "--value"],
                 capture_output=True, text=True
             ).stdout.strip()
-            if stype not in ("wayland", "x11"):
+            if session_type not in ("x11", "wayland", "mir"):
                 continue
-            dbus = f"/run/user/{uid}/bus"
-            if not os.path.exists(dbus):
-                continue
-            subprocess.Popen([
-                "runuser", "-u", username, "--",
+
+            display = subprocess.run(
+                ["loginctl", "show-session", session_id, "-p", "Display", "--value"],
+                capture_output=True, text=True
+            ).stdout.strip() or ":0"
+
+            dbus_path = f"/run/user/{uid}/bus"
+            if os.path.exists(dbus_path):
+                dbus_addr = f"unix:path={dbus_path}"
+                return username, display, dbus_addr  # username not UID
+
+        return None
+    except Exception:
+        return None
+
+
+def _notify(profile: str):
+    icons = {
+        "quiet":               "audio-volume-muted",
+        "balanced":            "battery-good",
+        "balanced-performance":"battery-full-charged",
+        "performance":         "utilities-system-monitor",
+    }
+    labels = {
+        "quiet":               "🔇 Quiet Mode  —  15W, boost off",
+        "balanced":            "⚖️ Balanced Mode  —  35W",
+        "balanced-performance":"⚡ Balanced-Performance  —  45W",
+        "performance":         "🚀 Performance Mode  —  54W",
+    }
+    try:
+        session = _get_user_session()
+        if session is None:
+            log.debug("No graphical session found — skipping notification")
+            return
+
+        uid, display, dbus_addr = session  # uid is now username e.g. "ryoutaorita"
+
+        subprocess.Popen(
+            [
+                "runuser", "-u", uid, "--",
                 "env",
-                f"DBUS_SESSION_BUS_ADDRESS=unix:path={dbus}",
+                f"DISPLAY={display}",
+                f"DBUS_SESSION_BUS_ADDRESS={dbus_addr}",
                 "notify-send",
-                "-i", icons.get(fw_name, "dialog-information"),
+                "-i", icons.get(profile, "dialog-information"),
                 "-t", "2500",
-                f"Legion — {label}",
-                desc,
-            ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            break
+                "Legion Profile Changed",
+                labels.get(profile, profile),
+            ],
+        )
     except Exception as e:
         log.debug(f"Notification skipped: {e}")
 
-# ── Unix socket server ─────────────────────────────────────────────────────────
-# Lets the GUI change profiles without pkexec — daemon is already root.
-#
-# Commands the GUI can send:
-#   set:<profile>          → apply profile, respond "ok" or "error:<msg>"
-#   write:<path>:<value>   → write any sysfs path, respond "ok" or "error:<msg>"
-#   get:profile            → respond "profile:<current>"
-#   get:choices            → respond "choices:<space-separated list>"
 
-def _handle_connection(conn: socket.socket):
-    try:
-        data = conn.recv(256).decode("utf-8", errors="replace").strip()
-        if not data:
-            return
-        log.debug(f"Socket cmd: {data!r}")
+# ── Battery helpers (called by CLI) ───────────────────────────────────────────
+def set_conservation_mode(enabled: bool):
+    """Battery conservation mode: caps charging at ~60%."""
+    write(CONSERVATION_MODE, "1" if enabled else "0",
+          f"Conservation mode {'ON' if enabled else 'OFF'}")
 
-        if data.startswith("set:"):
-            name = data[4:].strip()
-            fw   = _to_fw(name)
-            if fw in PROFILES:
-                try:
-                    PLATFORM_PROFILE.write_text(fw)
-                    # Daemon's poll loop will detect the change and apply settings
-                    conn.send(b"ok\n")
-                    log.info(f"Socket: profile → {fw}")
-                except Exception as e:
-                    conn.send(f"error:{e}\n".encode())
-            else:
-                conn.send(f"error:unknown profile {name!r}\n".encode())
 
-        elif data.startswith("write:"):
-            # write:/sys/path:value
-            _, path_str, value = data.split(":", 2)
-            try:
-                p = Path(path_str)
-                if not p.exists():
-                    conn.send(b"error:path not found\n")
-                    return
-                p.write_text(value.strip())
-                conn.send(b"ok\n")
-                log.info(f"Socket: write {path_str} → {value.strip()}")
-            except Exception as e:
-                conn.send(f"error:{e}\n".encode())
-
-        elif data == "get:profile":
-            conn.send(f"profile:{get_current_profile()}\n".encode())
-
-        elif data == "get:choices":
-            conn.send(f"choices:{' '.join(get_choices())}\n".encode())
-
-        else:
-            conn.send(b"error:unknown command\n")
-
-    except Exception as e:
-        log.warning(f"Socket handler error: {e}")
-    finally:
-        conn.close()
-
-def _run_socket_server(stop_event: threading.Event):
-    if SOCKET_PATH.exists():
-        SOCKET_PATH.unlink()
-    try:
-        srv = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        srv.bind(str(SOCKET_PATH))
-        SOCKET_PATH.chmod(0o666)  # any user can connect
-        srv.listen(8)
-        srv.settimeout(1.0)
-        log.info(f"Socket ready: {SOCKET_PATH}")
-    except Exception as e:
-        log.error(f"Socket server failed to start: {e}")
-        return
-
-    while not stop_event.is_set():
-        try:
-            conn, _ = srv.accept()
-            t = threading.Thread(target=_handle_connection, args=(conn,), daemon=True)
-            t.start()
-        except socket.timeout:
-            continue
-        except Exception as e:
-            if not stop_event.is_set():
-                log.warning(f"Socket accept error: {e}")
-
-    srv.close()
-    if SOCKET_PATH.exists():
-        SOCKET_PATH.unlink()
-    log.info("Socket server stopped")
-
-# ── Main daemon loop ───────────────────────────────────────────────────────────
-class Daemon:
-    def __init__(self):
-        self._running    = True
-        self._stop_event = threading.Event()
-        signal.signal(signal.SIGTERM, self._stop)
-        signal.signal(signal.SIGINT,  self._stop)
-
-    def _stop(self, *_):
-        log.info("Stopping...")
-        self._running = False
-        self._stop_event.set()
-
-    def run(self):
-        log.info("Legion Linux Toolkit daemon starting")
-        log.info(f"Firmware profile choices: {' | '.join(get_choices())}")
-
-        if not _rapl_available():
-            log.warning("RAPL not writable — TDP limits disabled")
-            log.warning("  → install ryzen_smu-dkms-git to enable")
-
-        # Start socket server
-        sock_thread = threading.Thread(
-            target=_run_socket_server, args=(self._stop_event,),
-            daemon=True, name="socket-server"
-        )
-        sock_thread.start()
-
-        # Apply current profile on startup
-        current = get_current_profile()
-        log.info(f"Startup profile: {current}")
-        apply_profile(current)
-        last = current
-
-        # Poll loop — detects Fn+Q and manual profile changes
-        log.info("Watching platform_profile (polling 300ms)...")
-        while self._running:
-            try:
-                current = get_current_profile()
-                if current != last:
-                    log.info(f"Profile changed: {last} → {current}")
-                    apply_profile(current)
-                    _notify(current)
-                    last = current
-            except Exception as e:
-                log.error(f"Poll error: {e}")
-            time.sleep(0.3)
-
-        self._stop_event.set()
-        log.info("Daemon stopped")
-
-# ── CLI (one-shot commands called by scripts / tray) ──────────────────────────
-def _cli(args):
-    cmd = args[0]
-
-    # Profile switch
-    if cmd in list(PROFILES.keys()) + list(_ALIASES.keys()):
-        apply_profile(cmd)
-        return
-
-    dispatch = {
-        "status": lambda: (
-            print(f"Profile  : {get_current_profile()}"),
-            print(f"Choices  : {' '.join(get_choices())}"),
-            print(f"Governor : {_read_first('/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor')}"),
-            print(f"Boost    : {_read_first(str(AMD_BOOST))}"),
-            print(f"EPP      : {_read_first('/sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference')}"),
-        ),
-        "conservation-on":  lambda: _write(CONSERVATION_MODE, "1", "conservation_mode"),
-        "conservation-off": lambda: _write(CONSERVATION_MODE, "0", "conservation_mode"),
-        "camera-on":        lambda: _write(CAMERA_POWER, "1", "camera"),
-        "camera-off":       lambda: _write(CAMERA_POWER, "0", "camera"),
-        "fn-lock-on":       lambda: _write(FN_LOCK, "1", "fn_lock"),
-        "fn-lock-off":      lambda: _write(FN_LOCK, "0", "fn_lock"),
-        "usb-charging-on":  lambda: _write(USB_CHARGING, "1", "usb_charging"),
-        "usb-charging-off": lambda: _write(USB_CHARGING, "0", "usb_charging"),
-        "rapid-charge-on":  lambda: _write(RAPID_CHARGE, "1", "rapid_charge"),
-        "rapid-charge-off": lambda: _write(RAPID_CHARGE, "0", "rapid_charge"),
-    }
-
-    if cmd in dispatch:
-        dispatch[cmd]()
+def set_battery_limit(percent: int):
+    """
+    ideapad_acpi only has conservation_mode (on/off, ~60% cap).
+    For a custom percentage, notify the user of the limitation.
+    """
+    if percent <= 60:
+        set_conservation_mode(True)
+        log.info("Battery limit ≤60% — conservation mode enabled")
     else:
-        print(f"Unknown command: {cmd}", file=sys.stderr)
-        print("Usage: legion-daemon [quiet|balanced|balanced-performance|performance|status]")
-        print("       legion-daemon [conservation-on|off|camera-on|off|fn-lock-on|off|...]")
-        sys.exit(1)
+        set_conservation_mode(False)
+        log.info(f"Battery limit {percent}% — conservation mode disabled (ideapad_acpi only supports on/off)")
 
-def _read_first(path: str) -> str:
-    try:
-        return Path(path).read_text().strip()
-    except Exception:
-        return "N/A"
+
+def set_camera(enabled: bool):
+    write(CAMERA_POWER, "1" if enabled else "0",
+          f"Camera {'enabled' if enabled else 'disabled'}")
+
+
+def set_fn_lock(locked: bool):
+    write(FN_LOCK, "1" if locked else "0",
+          f"Fn lock {'on' if locked else 'off'}")
+
+
+def set_usb_charging(enabled: bool):
+    write(USB_CHARGING, "1" if enabled else "0",
+          f"USB charging while off {'enabled' if enabled else 'disabled'}")
+
+
+def set_rapid_charge(enabled: bool):
+    write(RAPID_CHARGE, "1" if enabled else "0",
+          f"Rapid charging {'ON' if enabled else 'OFF (normal charging)'}")
+
 
 # ── Entry point ────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     if os.geteuid() != 0:
-        sys.exit("ERROR: must run as root")
+        print("ERROR: Run as root (sudo)", file=sys.stderr)
+        sys.exit(1)
 
     if len(sys.argv) > 1:
-        _cli(sys.argv[1:])
+        cmd = sys.argv[1]
+        if cmd in PROFILES:
+            apply_profile(cmd)
+        elif cmd == "conservation-on":
+            set_conservation_mode(True)
+        elif cmd == "conservation-off":
+            set_conservation_mode(False)
+        elif cmd == "camera-on":
+            set_camera(True)
+        elif cmd == "camera-off":
+            set_camera(False)
+        elif cmd == "fn-lock-on":
+            set_fn_lock(True)
+        elif cmd == "fn-lock-off":
+            set_fn_lock(False)
+        elif cmd == "usb-charging-on":
+            set_usb_charging(True)
+        elif cmd == "usb-charging-off":
+            set_usb_charging(False)
+        elif cmd == "rapid-charge-on":
+            set_rapid_charge(True)
+        elif cmd == "rapid-charge-off":
+            set_rapid_charge(False)
+        elif cmd == "status":
+            print(f"Profile  : {get_current_profile()}")
+            g = Path("/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor")
+            print(f"Governor : {g.read_text().strip() if g.exists() else 'N/A'}")
+            print(f"Boost    : {AMD_BOOST.read_text().strip() if AMD_BOOST.exists() else 'N/A'}")
+            print(f"Temp     : {_read_temp()} °C")
+            print(f"Cons.    : {CONSERVATION_MODE.read_text().strip() if CONSERVATION_MODE.exists() else 'N/A'}")
+        else:
+            print(f"Unknown command: {cmd}")
+            print(f"Usage: {sys.argv[0]} [quiet|balanced|balanced-performance|performance|status|conservation-on|off|camera-on|off|fn-lock-on|off|usb-charging-on|off]")
+            sys.exit(1)
     else:
-        Daemon().run()
+        # Run as daemon
+        ProfileWatcher().run()
