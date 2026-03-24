@@ -2,7 +2,7 @@
   <img src="logo.png" width="80" alt="Legion Linux Toolkit"/>
   <h1>Legion Linux Toolkit</h1>
   <p><strong>A native Linux power management dashboard for Lenovo laptops</strong></p>
-  <p>Built for CachyOS · KDE Plasma 6 · Wayland</p>
+  <p>Developed on CachyOS · KDE Plasma 6 · Wayland — works on any Arch-based distro</p>
 
   <p>
     <img src="https://img.shields.io/badge/version-v0.6.1--BETA-red?style=flat-square"/>
@@ -13,6 +13,8 @@
     <img src="https://img.shields.io/badge/license-MIT-white?style=flat-square"/>
   </p>
 </div>
+
+> **Status:** Beta — developed and tested on a Lenovo Legion 5 15ACH6H. Multi-brand support (ThinkPad, Yoga, IdeaPad, LOQ) is implemented via dynamic hardware detection but has had limited testing on those models. Contributions and issue reports from other Lenovo hardware are welcome.
 
 ---
 
@@ -64,6 +66,10 @@
 | 🔄 **Yoga** | Yoga 6, 7, 9, Slim series | ✅ Full + hinge mode, auto-rotate |
 | 💻 **IdeaPad** | IdeaPad 5, Flex, Slim | ✅ Standard — power, battery, toggles |
 | 📋 **ThinkBook** | ThinkBook 14, 16 | ✅ Standard — power, battery, fingerprint |
+
+> Features shown per-device are determined at runtime by hardware detection — only controls supported by your specific hardware will appear.
+
+---
 
 ## ✨ Features
 
