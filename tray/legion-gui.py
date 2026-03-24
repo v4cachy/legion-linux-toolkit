@@ -2805,10 +2805,26 @@ class HomePage(QWidget):
             "Switches GPU mode via envycontrol. Requires reboot to take effect.", self.gpu_mode_combo))
         gl.addWidget(make_div())
 
-        # G-Sync toggle
-        gsync_tog = ToggleSwitch(path=GSYNC, read_val=rdsys(GSYNC,"0"))
-        gl.addWidget(_setting_row("🔄", "G-Sync",
-            "NVIDIA G-Sync variable refresh rate (requires restart).", gsync_tog))
+        # G-Sync toggle — only functional in NVIDIA-only mode
+        _nvidia_mode = (_cur_gpu_idx == 1)  # 0=hybrid 1=nvidia 2=integrated
+        self._gsync_tog = ToggleSwitch(path=GSYNC, read_val=rdsys(GSYNC,"0"))
+        self._gsync_tog.setEnabled(_nvidia_mode)
+        self._gsync_tog.setToolTip(
+            "G-Sync is only available in NVIDIA-only GPU mode.\n"
+            "Switch GPU mode to NVIDIA and reboot to use G-Sync."
+            if not _nvidia_mode else
+            "NVIDIA G-Sync variable refresh rate (requires restart)."
+        )
+        _gsync_row = _setting_row("🔄", "G-Sync",
+            "Only works in NVIDIA-only GPU mode — switch GPU mode above." if not _nvidia_mode
+            else "NVIDIA G-Sync variable refresh rate (requires restart).",
+            self._gsync_tog)
+        self._gsync_row_widget = _gsync_row
+        if not _nvidia_mode:
+            _gsync_row.setStyleSheet(f"opacity:0.4;")
+            for child in _gsync_row.findChildren(QLabel):
+                child.setStyleSheet(child.styleSheet() + f"color:{C_TEXT3};")
+        gl.addWidget(_gsync_row)
         gl.addWidget(make_div())
 
         # Display Overdrive toggle
@@ -2893,10 +2909,22 @@ class HomePage(QWidget):
         labels   = ["Hybrid (iGPU + dGPU)", "NVIDIA (Discrete)", "Integrated (iGPU only)"]
         descs    = [
             "Best battery life — AMD iGPU renders, NVIDIA handles 3D workloads.",
-            "Best performance — NVIDIA RTX 3060 drives everything, more power draw.",
+            "Best performance — NVIDIA GPU drives everything, more power draw.",
             "Best battery — AMD iGPU only, NVIDIA fully powered off.",
         ]
         mode = modes[idx]
+
+        # Enable/disable G-Sync based on GPU mode
+        nvidia_only = (mode == "nvidia")
+        if hasattr(self, "_gsync_tog"):
+            self._gsync_tog.setEnabled(nvidia_only)
+            if not nvidia_only:
+                # Turn off G-Sync and write 0 when leaving NVIDIA mode
+                self._gsync_tog.setChecked(False, write=True, silent=True)
+            self._gsync_tog.setToolTip(
+                "G-Sync is only available in NVIDIA-only GPU mode." if not nvidia_only
+                else "NVIDIA G-Sync variable refresh rate (requires restart)."
+            )
 
         def _do():
             try:
@@ -3426,10 +3454,66 @@ class DisplayPage(QWidget):
                                   "Reduce display response time. May introduce minor artefacts.",
                                   OVERDRIVE, notif_title="Display Overdrive"))
         dl.addWidget(make_div())
-        dl.addWidget(NotifyToggle("G-Sync",
-                                  "NVIDIA G-Sync variable refresh rate (requires restart).",
-                                  GSYNC, notif_title="G-Sync"))
+
+        # G-Sync — only functional in NVIDIA-only mode
+        _gpu_mode_now = "hybrid"
+        try:
+            r = subprocess.run(["envycontrol","--query"], capture_output=True, text=True, timeout=3)
+            _gpu_mode_now = r.stdout.strip().lower()
+        except: pass
+        _gsync_available = (_gpu_mode_now == "nvidia")
+        _gsync_nt = NotifyToggle(
+            "G-Sync",
+            "NVIDIA G-Sync variable refresh rate (requires restart)." if _gsync_available
+            else "Only available in NVIDIA-only GPU mode. Current mode: " + _gpu_mode_now,
+            GSYNC, notif_title="G-Sync")
+        _gsync_nt.toggle.setEnabled(_gsync_available)
+        if not _gsync_available:
+            _gsync_nt.setStyleSheet(f"opacity:0.5;")
+        dl.addWidget(_gsync_nt)
         root.addWidget(dc)
+
+        # ── VRR / FreeSync ────────────────────────────────────────────────────
+        vc, vl = make_card("🔄  VRR / FreeSync")
+        vl.addWidget(_mk_lbl(
+            "Adaptive sync via KDE Plasma. Works in Hybrid mode through the AMD iGPU.\n"
+            "Automatic = only when app requests it (recommended). Always = always on.",
+            C_TEXT2, size=11))
+        vl.addWidget(make_div())
+
+        # Read current policy from kscreen
+        _, _cur_vrr_policy = get_vrr_status()
+        # kscreen policy: 0=never  1=always  2=automatic
+        _policy_map    = {0: 0, 1: 2, 2: 1}   # kscreen → combo index
+        _policy_to_ks  = {0: 0, 1: 2, 2: 1}   # combo index → kscreen value
+        _policy_labels = ["Never", "Always", "Automatic"]
+
+        vrr_row = QHBoxLayout(); vrr_row.setSpacing(12)
+        vrr_lbl = QLabel("Adaptive Sync:")
+        vrr_lbl.setStyleSheet(f"color:{C_TEXT};font-size:12px;background:transparent;")
+        self._vrr_combo = QComboBox()
+        self._vrr_combo.setStyleSheet(combo_style())
+        self._vrr_combo.setFixedHeight(34)
+        for lbl in _policy_labels:
+            self._vrr_combo.addItem(lbl)
+        _safe_idx = _policy_map.get(_cur_vrr_policy, 0)
+        self._vrr_combo.setCurrentIndex(_safe_idx)
+        vrr_row.addWidget(vrr_lbl); vrr_row.addWidget(self._vrr_combo); vrr_row.addStretch()
+        vl.addLayout(vrr_row)
+
+        self._vrr_status = QLabel("")
+        self._vrr_status.setStyleSheet(f"color:{C_GREEN};font-size:11px;background:transparent;")
+        vl.addWidget(self._vrr_status)
+
+        vrr_apply = QPushButton("Apply")
+        vrr_apply.setFixedHeight(32)
+        vrr_apply.setStyleSheet(
+            f"background:{C_ACCENT};color:#fff;border:none;"
+            f"border-radius:6px;font-size:12px;padding:0 16px;")
+        vrr_apply.setCursor(Qt.CursorShape.PointingHandCursor)
+        vrr_apply.clicked.connect(self._apply_vrr)
+        vl.addWidget(vrr_apply)
+        root.addWidget(vc)
 
         # ── Resolution ────────────────────────────────────────────────────────
         resc, resl = make_card("Resolution")
@@ -3613,11 +3697,56 @@ class DisplayPage(QWidget):
         set_refresh_rate(out_name, mode_str)
         QTimer.singleShot(1500, self._refresh_outputs)
 
+    def _apply_vrr(self):
+        """Apply VRR/FreeSync policy via kscreen-doctor + persist to kscreen config."""
+        # combo: 0=Never 1=Always 2=Automatic → kscreen: 0=never 2=always 1=automatic
+        _policy_to_ks = {0: 0, 1: 2, 2: 1}
+        idx    = self._vrr_combo.currentIndex()
+        policy = _policy_to_ks.get(idx, 0)
+        labels = ["Never", "Always", "Automatic"]
+        label  = labels[idx]
+
+        self._vrr_status.setStyleSheet(f"color:{C_ORANGE};font-size:11px;background:transparent;")
+        self._vrr_status.setText("⏳  Applying…")
+
+        def _do():
+            errors = []
+            try:
+                data = _kscreen_json()
+                for o in data.get("outputs", []):
+                    if not o.get("enabled"): continue
+                    name    = o.get("name","")
+                    out_idx = _kscreen_output_idx(name)
+                    policy_str = {0:"never", 1:"automatic", 2:"always"}.get(policy,"never")
+                    r = subprocess.run(
+                        ["kscreen-doctor", f"output.{out_idx}.vrrpolicy.{policy_str}"],
+                        capture_output=True, text=True, timeout=5
+                    )
+                    if r.returncode != 0 and r.stderr:
+                        errors.append(r.stderr.strip()[:60])
+                    # Persist to kscreen config files so it survives reboot
+                    _persist_vrr(name, policy)
+            except Exception as e:
+                errors.append(str(e)[:60])
+
+            if errors:
+                from PyQt6.QtCore import QMetaObject, Q_ARG
+                QMetaObject.invokeMethod(self._vrr_status, "setText",
+                    Qt.ConnectionType.QueuedConnection,
+                    Q_ARG(str, f"✗  {errors[0]}"))
+                self._vrr_status.setStyleSheet(f"color:{C_ORANGE};font-size:11px;background:transparent;")
+            else:
+                from PyQt6.QtCore import QMetaObject, Q_ARG
+                QMetaObject.invokeMethod(self._vrr_status, "setText",
+                    Qt.ConnectionType.QueuedConnection,
+                    Q_ARG(str, f"✓  VRR set to {label}"))
+                self._vrr_status.setStyleSheet(f"color:{C_GREEN};font-size:11px;background:transparent;")
+                send_notif("VRR / FreeSync", f"Adaptive sync → {label}", "display")
+
+        threading.Thread(target=_do, daemon=True).start()
+
     def refresh(self, d=None):
         pass
-
-# ══════════════════════════════════════════════════════════════════════════════
-# KEYBOARD PAGE (RGB)
 # ══════════════════════════════════════════════════════════════════════════════
 # ══════════════════════════════════════════════════════════════════════════════
 # KEYBOARD PAGE — via legionaura
