@@ -350,6 +350,24 @@ class ProfileWatcher:
                     conn.send(b"ok\n")
                 else:
                     conn.send(b"err:unknown profile\n")
+            elif data.startswith("envycontrol:"):
+                # envycontrol:hybrid|nvidia|integrated
+                mode = data[12:].strip()
+                if mode not in ("hybrid","nvidia","integrated"):
+                    conn.send(b"err:invalid mode\n")
+                else:
+                    try:
+                        r = subprocess.run(
+                            ["envycontrol","--switch", mode],
+                            capture_output=True, text=True, timeout=30
+                        )
+                        if r.returncode == 0:
+                            conn.send(b"ok\n")
+                            log.info(f"GPU mode switched to {mode}")
+                        else:
+                            conn.send(f"err:{r.stderr.strip()[:80]}\n".encode())
+                    except Exception as e:
+                        conn.send(f"err:{e}\n".encode())
             elif data.startswith("write:"):
                 # write:path:value
                 parts = data[6:].split(":", 1)
