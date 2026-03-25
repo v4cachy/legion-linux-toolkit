@@ -2805,26 +2805,14 @@ class HomePage(QWidget):
             "Switches GPU mode via envycontrol. Requires reboot to take effect.", self.gpu_mode_combo))
         gl.addWidget(make_div())
 
-        # G-Sync — only NVIDIA-only mode. Visual only — never force-write sysfs at build time.
-        _nvidia_mode = (_cur_gpu_idx == 1)  # 0=hybrid 1=nvidia 2=integrated
-        self._gsync_tog = ToggleSwitch(
-            path=GSYNC,
-            read_val="1" if (_nvidia_mode and rdsys(GSYNC,"0") == "1") else "0")
-        self._gsync_tog.setEnabled(_nvidia_mode)
+        # G-Sync — always available via nvidia_wmi_ec_backlight
+        _nvidia_mode = (_cur_gpu_idx == 1)
+        self._gsync_tog = ToggleSwitch(path=GSYNC, read_val=rdsys(GSYNC,"0"))
         self._gsync_tog.setToolTip(
-            "G-Sync is only available in NVIDIA-only GPU mode.\n"
-            "Switch GPU mode to NVIDIA and reboot."
-            if not _nvidia_mode else
-            "NVIDIA G-Sync variable refresh rate (requires restart)."
-        )
+            "NVIDIA G-Sync via nvidia_wmi_ec_backlight.\nAlso enables full backlight dimming to 0.")
         _gsync_row = _setting_row("🔄", "G-Sync",
-            "NVIDIA-only GPU mode required." if not _nvidia_mode
-            else "NVIDIA G-Sync variable refresh rate (requires restart).",
+            "NVIDIA G-Sync variable refresh rate (requires restart).",
             self._gsync_tog)
-        self._gsync_row_widget = _gsync_row
-        if not _nvidia_mode:
-            for child in _gsync_row.findChildren(QLabel):
-                child.setStyleSheet(child.styleSheet() + f"color:{C_TEXT3};")
         gl.addWidget(_gsync_row)
         gl.addWidget(make_div())
 
@@ -2914,17 +2902,6 @@ class HomePage(QWidget):
             "AMD iGPU only, NVIDIA powered off — reboot required.",
         ]
         mode = modes[idx]
-        nvidia_only = (mode == "nvidia")
-
-        # Update G-Sync toggle state
-        if hasattr(self, "_gsync_tog"):
-            self._gsync_tog.setEnabled(nvidia_only)
-            if not nvidia_only:
-                self._gsync_tog.setChecked(False, write=False, silent=True)
-            self._gsync_tog.setToolTip(
-                "G-Sync: only available in NVIDIA-only mode." if not nvidia_only
-                else "NVIDIA G-Sync variable refresh rate (requires restart)."
-            )
 
         def _do():
             try:
@@ -3464,79 +3441,14 @@ class DisplayPage(QWidget):
                                   OVERDRIVE, notif_title="Display Overdrive"))
         dl.addWidget(make_div())
 
-        # Detect GPU mode once — drives both G-Sync and VRR visibility
-        _gpu_mode_now = "hybrid"
-        try:
-            r = subprocess.run(["envycontrol","--query"], capture_output=True, text=True, timeout=3)
-            _gpu_mode_now = r.stdout.strip().lower()
-        except: pass
-        _nvidia_only  = (_gpu_mode_now == "nvidia")
-        _vrr_enabled  = not _nvidia_only   # VRR works in Hybrid + Integrated
-
-        # G-Sync — only NVIDIA-only mode. Visual only — never force-write sysfs at build time.
+        # G-Sync — always available, managed by nvidia_wmi_ec_backlight
         _gsync_nt = NotifyToggle(
             "G-Sync",
-            "NVIDIA G-Sync variable refresh rate (requires restart)." if _nvidia_only
-            else f"Only available in NVIDIA-only GPU mode  ·  current: {_gpu_mode_now}",
+            "NVIDIA G-Sync via nvidia_wmi_ec_backlight. Also controls backlight dimming to 0.",
             GSYNC,
-            notif_title="G-Sync",
-            read_val="1" if (_nvidia_only and rdsys(GSYNC,"0") == "1") else "0")
-        _gsync_nt.toggle.setEnabled(_nvidia_only)
-        if not _nvidia_only:
-            _gsync_nt.setStyleSheet("opacity:0.4;")
+            notif_title="G-Sync")
         dl.addWidget(_gsync_nt)
         root.addWidget(dc)
-
-        # ── VRR / FreeSync ────────────────────────────────────────────────────
-        vc, vl = make_card("🔄  VRR / FreeSync")
-
-        _vrr_desc = (
-            "Adaptive sync via KDE Plasma — works in Hybrid and Integrated GPU mode.\n"
-            "Automatic (recommended) = activates when the app requests it."
-            if _vrr_enabled else
-            f"VRR / FreeSync is not available in NVIDIA-only GPU mode  ·  current: {_gpu_mode_now}"
-        )
-        vl.addWidget(_mk_lbl(_vrr_desc, C_TEXT2, size=11))
-        vl.addWidget(make_div())
-
-        # kscreen policy: 0=Never  1=Automatic  2=Always
-        _, _cur_vrr_policy = get_vrr_status()
-        # Map kscreen value → combo index (Never=0, Automatic=1, Always=2)
-        _ks_to_idx = {0: 0, 1: 1, 2: 2}
-        _idx_to_ks = {0: 0, 1: 1, 2: 2}
-
-        vrr_row = QHBoxLayout(); vrr_row.setSpacing(12)
-        vrr_lbl = QLabel("Adaptive Sync:")
-        vrr_lbl.setStyleSheet(f"color:{C_TEXT if _vrr_enabled else C_TEXT3};font-size:12px;background:transparent;")
-        self._vrr_combo = QComboBox()
-        self._vrr_combo.setStyleSheet(combo_style())
-        self._vrr_combo.setFixedHeight(34)
-        self._vrr_combo.addItem("Never")
-        self._vrr_combo.addItem("Automatic  ✦ recommended")
-        self._vrr_combo.addItem("Always")
-        self._vrr_combo.setCurrentIndex(_ks_to_idx.get(_cur_vrr_policy, 0))
-        self._vrr_combo.setEnabled(_vrr_enabled)
-        vrr_row.addWidget(vrr_lbl); vrr_row.addWidget(self._vrr_combo); vrr_row.addStretch()
-        vl.addLayout(vrr_row)
-
-        self._vrr_status = QLabel("")
-        self._vrr_status.setStyleSheet(f"color:{C_GREEN};font-size:11px;background:transparent;")
-        vl.addWidget(self._vrr_status)
-
-        vrr_apply = QPushButton("Apply")
-        vrr_apply.setFixedHeight(32)
-        vrr_apply.setEnabled(_vrr_enabled)
-        vrr_apply.setStyleSheet(
-            f"background:{C_ACCENT if _vrr_enabled else C_CARD2};"
-            f"color:{'#fff' if _vrr_enabled else C_TEXT3};"
-            f"border:none;border-radius:6px;font-size:12px;padding:0 16px;")
-        vrr_apply.setCursor(Qt.CursorShape.PointingHandCursor if _vrr_enabled
-                            else Qt.CursorShape.ForbiddenCursor)
-        vrr_apply.clicked.connect(self._apply_vrr)
-        vl.addWidget(vrr_apply)
-        if not _vrr_enabled:
-            vc.setStyleSheet(vc.styleSheet() + "opacity:0.5;")
-        root.addWidget(vc)
 
         # ── Resolution ────────────────────────────────────────────────────────
         resc, resl = make_card("Resolution")
