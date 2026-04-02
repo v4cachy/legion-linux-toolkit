@@ -97,7 +97,7 @@ BL=$(ls /sys/class/backlight/*/brightness 2>/dev/null | head -1 || true)
                || echo -e "     ${YELLOW}-${NC}  backlight not found"
 
 # ── 4. Build standalone binaries ─────────────────────────────────────────────
-echo -e "\n${BOLD}[4/9] Building standalone binaries (Nuitka)…${NC}"
+echo -e "\n${BOLD}[4/9] Building standalone binaries (PyInstaller)…${NC}"
 DIST="$SCRIPT_DIR/dist"
 BUILD_OK=false
 
@@ -105,39 +105,17 @@ if [[ -f "$DIST/legion-gui" && -f "$DIST/legion-tray" ]]; then
     ok "Pre-built binaries found in dist/ — skipping build"
     BUILD_OK=true
 else
-    # Install Nuitka
-    if ! python3 -m nuitka --version &>/dev/null 2>&1; then
-        info "Installing Nuitka…"
-        pip install nuitka --break-system-packages 2>/dev/null || true
+    # Install PyInstaller
+    if ! python3 -m PyInstaller --version &>/dev/null 2>&1; then
+        info "Installing PyInstaller…"
+        pip install pyinstaller --break-system-packages 2>/dev/null || true
     fi
 
-    if python3 -m nuitka --version &>/dev/null 2>&1; then
-        mkdir -p "$DIST"
-        NFLAGS=(
-            --onefile --enable-plugin=pyqt6 --assume-yes-for-downloads
-            --output-dir="$DIST" --nofollow-import-to=tkinter
-            --nofollow-import-to=unittest --python-flag=no_docstrings
-            --python-flag=no_asserts --quiet
-        )
-        [[ -f "$SCRIPT_DIR/logo.png" ]] && NFLAGS+=(--linux-icon="$SCRIPT_DIR/logo.png")
-
-        info "Compiling legion-gui (5–10 min first time)…"
-        python3 -m nuitka "${NFLAGS[@]}" --output-filename=legion-gui \
-            "$SCRIPT_DIR/tray/legion-gui.py" 2>&1 | tail -2 || true
-
-        info "Compiling legion-tray…"
-        python3 -m nuitka "${NFLAGS[@]}" --output-filename=legion-tray \
-            "$SCRIPT_DIR/tray/legion-tray.py" 2>&1 | tail -2 || true
-
-        if [[ -f "$DIST/legion-gui" && -f "$DIST/legion-tray" ]]; then
-            chmod +x "$DIST/legion-gui" "$DIST/legion-tray"
-            ok "Standalone binaries compiled"
-            BUILD_OK=true
-        else
-            warn "Build failed — falling back to Python scripts"
-        fi
+    if python3 -m PyInstaller --version &>/dev/null 2>&1; then
+        info "Building binaries via PyInstaller (2–5 min)…"
+        bash "$SCRIPT_DIR/build.sh"             && BUILD_OK=true             || warn "Build failed — falling back to Python scripts"
     else
-        warn "Nuitka unavailable — using Python scripts (run 'bash build.sh' later)"
+        warn "PyInstaller unavailable — using Python scripts (run 'bash build.sh' later)"
     fi
 fi
 
