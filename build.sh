@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ══════════════════════════════════════════════════════════════════════════════
-# Legion Linux Toolkit — Nuitka Build Script
+# Legion Linux Toolkit — PyInstaller Build Script
 # Compiles legion-gui.py and legion-tray.py into standalone binaries
 # ══════════════════════════════════════════════════════════════════════════════
 set -euo pipefail
@@ -13,100 +13,102 @@ warn() { echo -e "  ${YELLOW}⚠${NC}  $*"; }
 err()  { echo -e "  ${RED}✗${NC}  $*"; exit 1; }
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TRAY_SRC="$SCRIPT_DIR/tray/legion-tray.py"
-GUI_SRC="$SCRIPT_DIR/tray/legion-gui.py"
-OUT_DIR="$SCRIPT_DIR/dist"
+DIST="$SCRIPT_DIR/dist"
+BUILD_DIR="$SCRIPT_DIR/_build_tmp"
 
 echo -e "\n${BOLD}╔══════════════════════════════════════════╗"
 echo      "║   Legion Linux Toolkit — Build           ║"
-echo      "║   Nuitka → Standalone Binaries           ║"
+echo      "║   PyInstaller → Standalone Binaries      ║"
 echo -e   "╚══════════════════════════════════════════╝${NC}\n"
 
-# ── 1. Check Nuitka ──────────────────────────────────────────────────────────
-echo -e "${BOLD}[1/5] Checking Nuitka…${NC}"
-if ! python3 -m nuitka --version &>/dev/null; then
-    info "Nuitka not found — installing…"
-    pip install nuitka --break-system-packages \
-        || err "Failed to install Nuitka. Try: pip install nuitka --break-system-packages"
+# ── 1. Install PyInstaller ────────────────────────────────────────────────────
+echo -e "${BOLD}[1/4] Checking PyInstaller…${NC}"
+if ! python3 -m PyInstaller --version &>/dev/null 2>&1; then
+    info "Installing PyInstaller…"
+    pip install pyinstaller --break-system-packages \
+        || err "Failed — try: pip install pyinstaller --break-system-packages"
 fi
-NUITKA_VER=$(python3 -m nuitka --version 2>/dev/null | head -1)
-ok "Nuitka ready — $NUITKA_VER"
+VER=$(python3 -m PyInstaller --version 2>/dev/null)
+ok "PyInstaller $VER ready"
 
-# ── 2. Check dependencies ─────────────────────────────────────────────────────
-echo -e "${BOLD}[2/5] Checking dependencies…${NC}"
-python3 -c "import PyQt6" 2>/dev/null || err "python-pyqt6 not installed"
-ok "PyQt6 found"
-command -v patchelf &>/dev/null || {
-    warn "patchelf not found — installing (needed by Nuitka)"
-    pacman -S --noconfirm --needed patchelf 2>/dev/null || true
-}
+# ── 2. Prepare ────────────────────────────────────────────────────────────────
+echo -e "${BOLD}[2/4] Preparing…${NC}"
+mkdir -p "$DIST" "$BUILD_DIR"
 
-# ── 3. Prepare output directory ───────────────────────────────────────────────
-echo -e "${BOLD}[3/5] Preparing output…${NC}"
-mkdir -p "$OUT_DIR"
-ok "Output directory: $OUT_DIR"
+# Find PyQt6 location for hooks
+PYQT6_PATH=$(python3 -c "import PyQt6; import os; print(os.path.dirname(PyQt6.__file__))" 2>/dev/null || echo "")
+[[ -n "$PYQT6_PATH" ]] && ok "PyQt6 found at $PYQT6_PATH" || warn "PyQt6 path not found"
 
-# Common Nuitka flags
-COMMON_FLAGS=(
+# Common PyInstaller flags
+COMMON=(
     --onefile
-    --enable-plugin=pyqt6
-    --assume-yes-for-downloads
-    --output-dir="$OUT_DIR"
-    --linux-icon="$SCRIPT_DIR/logo.png"
-    --nofollow-import-to=tkinter
-    --nofollow-import-to=unittest
-    --nofollow-import-to=test
-    --python-flag=no_docstrings
-    --python-flag=no_asserts
-    --quiet
+    --noconfirm
+    --clean
+    --distpath "$DIST"
+    --workpath "$BUILD_DIR"
+    --specpath "$BUILD_DIR"
+    --hidden-import=PyQt6
+    --hidden-import=PyQt6.QtWidgets
+    --hidden-import=PyQt6.QtCore
+    --hidden-import=PyQt6.QtGui
+    --collect-all=PyQt6
+    --exclude-module=tkinter
+    --exclude-module=unittest
+    --exclude-module=email
+    --exclude-module=xml
+    --exclude-module=pydoc
+    --log-level=WARN
 )
 
-# ── 4. Build GUI (legion-gui) ─────────────────────────────────────────────────
-echo -e "${BOLD}[4/5] Compiling legion-gui (dashboard)…${NC}"
-info "This takes 3–8 minutes on first build…"
+[[ -f "$SCRIPT_DIR/logo.png" ]] && COMMON+=(--icon="$SCRIPT_DIR/logo.png")
 
-python3 -m nuitka \
-    "${COMMON_FLAGS[@]}" \
-    --output-filename=legion-gui \
-    --windows-disable-console \
-    "$GUI_SRC" 2>&1 | grep -v "^Nuitka:" | grep -v "^$" || true
-
-if [[ -f "$OUT_DIR/legion-gui" ]]; then
-    chmod +x "$OUT_DIR/legion-gui"
-    SIZE=$(du -sh "$OUT_DIR/legion-gui" | cut -f1)
-    ok "legion-gui built → $OUT_DIR/legion-gui  ($SIZE)"
-else
-    err "legion-gui build failed — check output above"
-fi
-
-# ── 5. Build tray (legion-tray) ───────────────────────────────────────────────
-echo -e "${BOLD}[5/5] Compiling legion-tray…${NC}"
+# ── 3. Build legion-gui ───────────────────────────────────────────────────────
+echo -e "${BOLD}[3/4] Building legion-gui…${NC}"
 info "This takes 2–5 minutes…"
 
-python3 -m nuitka \
-    "${COMMON_FLAGS[@]}" \
-    --output-filename=legion-tray \
-    "$TRAY_SRC" 2>&1 | grep -v "^Nuitka:" | grep -v "^$" || true
+python3 -m PyInstaller \
+    "${COMMON[@]}" \
+    --name legion-gui \
+    --windowed \
+    "$SCRIPT_DIR/tray/legion-gui.py"
 
-if [[ -f "$OUT_DIR/legion-tray" ]]; then
-    chmod +x "$OUT_DIR/legion-tray"
-    SIZE=$(du -sh "$OUT_DIR/legion-tray" | cut -f1)
-    ok "legion-tray built → $OUT_DIR/legion-tray  ($SIZE)"
+if [[ -f "$DIST/legion-gui" ]]; then
+    chmod +x "$DIST/legion-gui"
+    SIZE=$(du -sh "$DIST/legion-gui" | cut -f1)
+    ok "legion-gui  →  $DIST/legion-gui  ($SIZE)"
 else
-    err "legion-tray build failed — check output above"
+    err "legion-gui build failed"
 fi
 
-# ── Done ─────────────────────────────────────────────────────────────────────
+# ── 4. Build legion-tray ──────────────────────────────────────────────────────
+echo -e "${BOLD}[4/4] Building legion-tray…${NC}"
+info "This takes 1–3 minutes…"
+
+python3 -m PyInstaller \
+    "${COMMON[@]}" \
+    --name legion-tray \
+    "$SCRIPT_DIR/tray/legion-tray.py"
+
+if [[ -f "$DIST/legion-tray" ]]; then
+    chmod +x "$DIST/legion-tray"
+    SIZE=$(du -sh "$DIST/legion-tray" | cut -f1)
+    ok "legion-tray  →  $DIST/legion-tray  ($SIZE)"
+else
+    err "legion-tray build failed"
+fi
+
+# Cleanup build temp
+rm -rf "$BUILD_DIR"
+
 echo -e "\n${GREEN}${BOLD}✓ Build complete!${NC}"
 echo ""
-echo    "  Binaries in: $OUT_DIR/"
-ls -lh "$OUT_DIR/legion-gui" "$OUT_DIR/legion-tray" 2>/dev/null | \
-    awk '{print "    "$NF"  "$5}'
+ls -lh "$DIST/legion-gui" "$DIST/legion-tray" 2>/dev/null | \
+    awk '{print "  " $NF "  " $5}'
 echo ""
-echo    "  Test the binaries:"
-echo -e "    ${CYAN}$OUT_DIR/legion-tray &${NC}"
-echo -e "    ${CYAN}$OUT_DIR/legion-gui${NC}"
+echo    "  Test:"
+echo -e "    ${CYAN}$DIST/legion-tray &${NC}"
+echo -e "    ${CYAN}$DIST/legion-gui${NC}"
 echo ""
-echo    "  To install the built binaries instead of the Python scripts:"
-echo -e "    ${CYAN}sudo bash install-binary.sh${NC}"
+echo    "  Install built binaries:"
+echo -e "    ${CYAN}sudo bash install.sh${NC}  (auto-detects and installs them)"
 echo ""
