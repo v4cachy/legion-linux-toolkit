@@ -70,9 +70,21 @@ if [[ "$BRAND" == "Legion" || "$BRAND" == "LOQ" ]]; then
         modprobe -r legion_laptop 2>/dev/null || true
         modprobe legion_laptop force=1 2>/dev/null && ok "Force-load applied" || warn "Force-load failed"
     fi
-    ! command -v envycontrol &>/dev/null && command -v paru &>/dev/null \
-        && sudo -u "${REAL_USER:-root}" paru -S --noconfirm envycontrol 2>/dev/null \
-        && ok "envycontrol installed" || true
+    if ! command -v envycontrol &>/dev/null; then
+        if command -v paru &>/dev/null; then
+            sudo -u "${REAL_USER:-root}" paru -S --noconfirm envycontrol 2>/dev/null                 && ok "envycontrol installed"                 || warn "envycontrol install failed — run: paru -S envycontrol"
+        else
+            warn "paru not found — install envycontrol manually: paru -S envycontrol"
+        fi
+    else
+        ok "envycontrol already installed"
+    fi
+    # Symlink to /usr/local/bin so daemon (root) can always find it
+    ENV_BIN=$(command -v envycontrol 2>/dev/null || true)
+    if [[ -n "$ENV_BIN" && ! -f "/usr/local/bin/envycontrol" ]]; then
+        ln -sf "$ENV_BIN" /usr/local/bin/envycontrol
+        ok "envycontrol symlinked → /usr/local/bin/envycontrol"
+    fi
 fi
 if [[ "$BRAND" == "Legion" ]]; then
     ! command -v legionaura &>/dev/null && command -v yay &>/dev/null \
