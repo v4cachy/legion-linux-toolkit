@@ -17,7 +17,6 @@ err()  { echo -e "  ${RED}✗${NC}  $*"; exit 1; }
 REPO_URL="https://github.com/v4cachy/legion-linux-toolkit"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REAL_USER="${SUDO_USER:-$(logname 2>/dev/null || echo "")}"
-DIST="$SCRIPT_DIR/dist"
 
 echo -e "\n${BOLD}╔══════════════════════════════════════════╗"
 echo      "║   Legion Linux Toolkit — Updater         ║"
@@ -26,10 +25,8 @@ echo -e   "╚══════════════════════
 echo -e "  Repo: ${CYAN}${REPO_URL}${NC}\n"
 
 # ── 1. Pull from GitHub ───────────────────────────────────────────────────────
-echo -e "${BOLD}[1/5] Pulling latest from GitHub…${NC}"
+echo -e "${BOLD}[1/4] Pulling latest from GitHub…${NC}"
 command -v git &>/dev/null || err "git not found — sudo pacman -S git"
-
-SOURCE_CHANGED=false
 
 if [[ -d "$SCRIPT_DIR/.git" ]]; then
     cd "$SCRIPT_DIR"
@@ -63,47 +60,17 @@ else
     git clone --depth=1 "$REPO_URL" "$TMPDIR/legion-toolkit" 2>&1 | tail -3
     rsync -a --exclude='.git' "$TMPDIR/legion-toolkit/" "$SCRIPT_DIR/" \
         || cp -r "$TMPDIR/legion-toolkit/." "$SCRIPT_DIR/"
-    SOURCE_CHANGED=true
-    ok "Files updated"
-fi
-
-# ── 2. Rebuild binaries if source changed ─────────────────────────────────────
-echo -e "${BOLD}[2/5] Checking binaries…${NC}"
-BUILD_OK=false
-
-# Use existing binaries if source didn't change
-if [[ -f "$DIST/legion-gui" && -f "$DIST/legion-tray" && "$SOURCE_CHANGED" == false ]]; then
-    ok "Binaries up to date — skipping rebuild"
-    BUILD_OK=true
-else
-    if [[ "$SOURCE_CHANGED" == true ]]; then
-        info "Source changed — removing old binaries…"
-        rm -f "$DIST/legion-gui" "$DIST/legion-tray"
-    fi
-
-    if ! python3 -m PyInstaller --version &>/dev/null 2>&1; then
-        pip install pyinstaller --break-system-packages 2>/dev/null || true
-    fi
-
-    if python3 -m PyInstaller --version &>/dev/null 2>&1; then
-        mkdir -p "$DIST"
-        info "Rebuilding binaries via PyInstaller…"
-        bash "$SCRIPT_DIR/build.sh"             && BUILD_OK=true             || warn "Build failed — falling back to Python scripts"
-        [[ -f "$DIST/legion-gui" && -f "$DIST/legion-tray" ]] && BUILD_OK=true || true
-    else
-        warn "PyInstaller not available — using Python scripts"
-    fi
 fi
 
 # ── 3. Stop running instances ─────────────────────────────────────────────────
-echo -e "${BOLD}[3/5] Stopping running instances…${NC}"
+echo -e "${BOLD}[2/4] Stopping running instances…${NC}"
 pkill -f "legion-tray"   2>/dev/null && info "Stopped tray"   || true
 pkill -f "legion-gui"    2>/dev/null && info "Stopped gui"    || true
 pkill -f "legion-daemon" 2>/dev/null && info "Stopped daemon" || true
 sleep 0.4
 
 # ── 4. Install updated files ──────────────────────────────────────────────────
-echo -e "${BOLD}[4/5] Installing updated files…${NC}"
+echo -e "${BOLD}[3/4] Installing updated files…${NC}"
 
 install_file() {
     local src="$1" dst="$2" mode="${3:-644}"
@@ -127,15 +94,8 @@ install_file "$SCRIPT_DIR/systemd/legion-toolkit.service"    /etc/systemd/system
     udevadm control --reload-rules && udevadm trigger && ok "udev rules reloaded"
 }
 
-if [[ "$BUILD_OK" == true ]]; then
-    install_file "$DIST/legion-gui"  /usr/lib/legion-toolkit/legion-gui  755
-    install_file "$DIST/legion-tray" /usr/lib/legion-toolkit/legion-tray 755
-    TRAY_EXEC="/usr/lib/legion-toolkit/legion-tray"
-    TRAY_PGREP="legion-tray"
-else
-    TRAY_EXEC="/usr/lib/legion-toolkit/legion-tray.py"
-    TRAY_PGREP="legion-tray.py"
-fi
+TRAY_EXEC="/usr/lib/legion-toolkit/legion-tray.py"
+TRAY_PGREP="legion-tray.py"
 
 # Update autostart
 cat > /etc/xdg/autostart/legion-toolkit.desktop << EOF
@@ -150,7 +110,7 @@ X-GNOME-Autostart-enabled=true
 EOF
 
 # ── 5. Restart services ───────────────────────────────────────────────────────
-echo -e "${BOLD}[5/5] Restarting services…${NC}"
+echo -e "${BOLD}[4/4] Restarting services…${NC}"
 systemctl daemon-reload
 systemctl is-enabled --quiet legion-toolkit.service 2>/dev/null \
     && systemctl restart legion-toolkit.service && ok "Daemon restarted" \
