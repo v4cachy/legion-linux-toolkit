@@ -46,7 +46,7 @@ fi
 echo -e "  ${CYAN}Detected:${NC}  $BRAND — $(cat /sys/class/dmi/id/product_name 2>/dev/null || echo 'Unknown')\n"
 
 # ── 1. Core dependencies ──────────────────────────────────────────────────────
-echo -e "${BOLD}[1/9] Checking core dependencies…${NC}"
+echo -e "${BOLD}[1/8] Checking core dependencies…${NC}"
 MISSING_PACMAN=()
 python3 -c "import PyQt6" 2>/dev/null || MISSING_PACMAN+=("python-pyqt6")
 command -v notify-send &>/dev/null     || MISSING_PACMAN+=("libnotify")
@@ -58,7 +58,7 @@ command -v patchelf &>/dev/null        || MISSING_PACMAN+=("patchelf")
 ok "Core packages ready"
 
 # ── 2. Brand-specific optional packages ──────────────────────────────────────
-echo -e "\n${BOLD}[2/9] Installing optional packages for $BRAND…${NC}"
+echo -e "\n${BOLD}[2/8] Installing optional packages for $BRAND…${NC}"
 if [[ "$BRAND" == "Legion" || "$BRAND" == "LOQ" ]]; then
     if ! lsmod 2>/dev/null | grep -q "lenovo_legion"; then
         pacman -S --noconfirm --needed lenovolegionlinux lenovolegionlinux-dkms 2>/dev/null \
@@ -99,7 +99,7 @@ if [[ "$BRAND" == "Yoga" ]]; then
 fi
 
 # ── 3. Hardware detection ─────────────────────────────────────────────────────
-echo -e "\n${BOLD}[3/9] Hardware detection…${NC}"
+echo -e "\n${BOLD}[3/8] Hardware detection…${NC}"
 chk() { [[ -e "$2" ]] && echo -e "     ${GREEN}✓${NC}  $1" || echo -e "     ${YELLOW}-${NC}  $1"; }
 chk "platform_profile"  "/sys/firmware/acpi/platform_profile"
 chk "ideapad_acpi"      "/sys/bus/platform/drivers/ideapad_acpi/VPC2004:00"
@@ -108,38 +108,15 @@ BL=$(ls /sys/class/backlight/*/brightness 2>/dev/null | head -1 || true)
 [[ -n "$BL" ]] && echo -e "     ${GREEN}✓${NC}  backlight → $(dirname "$BL")" \
                || echo -e "     ${YELLOW}-${NC}  backlight not found"
 
-# ── 4. Build standalone binaries ─────────────────────────────────────────────
-echo -e "\n${BOLD}[4/9] Building standalone binaries (PyInstaller)…${NC}"
-DIST="$SCRIPT_DIR/dist"
-BUILD_OK=false
-
-if [[ -f "$DIST/legion-gui" && -f "$DIST/legion-tray" ]]; then
-    ok "Pre-built binaries found in dist/ — skipping build"
-    BUILD_OK=true
-else
-    # Install PyInstaller
-    if ! python3 -m PyInstaller --version &>/dev/null 2>&1; then
-        info "Installing PyInstaller…"
-        pip install pyinstaller --break-system-packages 2>/dev/null || true
-    fi
-
-    if python3 -m PyInstaller --version &>/dev/null 2>&1; then
-        info "Building binaries via PyInstaller (2–5 min)…"
-        bash "$SCRIPT_DIR/build.sh"             && BUILD_OK=true             || warn "Build failed — falling back to Python scripts"
-    else
-        warn "PyInstaller unavailable — using Python scripts (run 'bash build.sh' later)"
-    fi
-fi
-
 # ── 5. Daemon ─────────────────────────────────────────────────────────────────
-echo -e "${BOLD}[5/9] Installing daemon…${NC}"
+echo -e "${BOLD}[4/8] Installing daemon…${NC}"
 install -d /usr/lib/legion-toolkit
 install -m 755 "$SCRIPT_DIR/daemon/legion-daemon.py" /usr/lib/legion-toolkit/legion-daemon.py
 install -m 755 "$SCRIPT_DIR/udev/udev-trigger.sh"    /usr/lib/legion-toolkit/udev-trigger.sh
 ok "Daemon installed"
 
 # ── 6. CLI ────────────────────────────────────────────────────────────────────
-echo -e "${BOLD}[6/9] Installing CLI…${NC}"
+echo -e "${BOLD}[5/8] Installing CLI…${NC}"
 if [[ -f "$SCRIPT_DIR/scripts/legion-ctl" ]]; then
     install -m 755 "$SCRIPT_DIR/scripts/legion-ctl" /usr/local/bin/legion-ctl
 else
@@ -149,7 +126,7 @@ fi
 ok "CLI installed"
 
 # ── 7. GUI + tray ─────────────────────────────────────────────────────────────
-echo -e "${BOLD}[7/9] Installing GUI and tray…${NC}"
+echo -e "${BOLD}[6/8] Installing GUI and tray…${NC}"
 # Always install Python scripts (source + daemon reference)
 install -m 755 "$SCRIPT_DIR/tray/legion-gui.py"  /usr/lib/legion-toolkit/legion-gui.py
 install -m 755 "$SCRIPT_DIR/tray/legion-tray.py" /usr/lib/legion-toolkit/legion-tray.py
@@ -183,7 +160,7 @@ EOF
 ok "Autostart configured → $TRAY_EXEC"
 
 # ── 8. udev + systemd ─────────────────────────────────────────────────────────
-echo -e "${BOLD}[8/9] Installing udev rules and service…${NC}"
+echo -e "${BOLD}[7/8] Installing udev rules and service…${NC}"
 install -m 644 "$SCRIPT_DIR/udev/99-legion-toolkit.rules" /etc/udev/rules.d/
 udevadm control --reload-rules && udevadm trigger
 install -m 644 "$SCRIPT_DIR/systemd/legion-toolkit.service" \
@@ -193,7 +170,7 @@ touch /var/log/legion-toolkit.log && chmod 644 /var/log/legion-toolkit.log
 ok "udev rules and service installed"
 
 # ── 9. Verify + launch ────────────────────────────────────────────────────────
-echo -e "\n${BOLD}[9/9] Verifying and launching…${NC}"
+echo -e "\n${BOLD}[8/8] Verifying and launching…${NC}"
 sleep 1
 systemctl is-active --quiet legion-toolkit.service && ok "Daemon running" \
     || warn "Daemon not running — journalctl -u legion-toolkit.service"
