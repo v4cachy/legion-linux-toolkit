@@ -444,45 +444,94 @@ def detect_hardware() -> dict:
     chassis     = _dmi("chassis_type")
 
     # ── Brand detection ───────────────────────────────────────────────────────
-    full = f"{product} {family}"
-    if any(k in full for k in ["legion","loq"]):
-        brand = "legion" if "legion" in full else "loq"
-    elif "thinkpad" in full:
-        brand = "thinkpad"
-    elif "thinkbook" in full:
-        brand = "thinkbook"
-    elif "yoga" in full:
-        brand = "yoga"
-    elif "ideapad" in full or "idea" in full:
-        brand = "ideapad"
-    else:
-        brand = "ideapad"   # safe default for unknown Lenovo
+    full = f"{product} {family}".lower()
+    if any(k in full for k in ["legion"]):        brand = "legion"
+    elif "loq" in full:                           brand = "loq"
+    elif "thinkpad" in full:                      brand = "thinkpad"
+    elif "thinkbook" in full:                     brand = "thinkbook"
+    elif "yoga" in full:                          brand = "yoga"
+    elif any(k in full for k in ["ideapad","idea pad","flex","slim"]): brand = "ideapad"
+    else:                                          brand = "ideapad"
 
-    # ── Capability scan — check every relevant sysfs path ────────────────────
+    # ── CPU vendor detection ──────────────────────────────────────────────────
+    cpu_vendor = "unknown"
+    cpu_name   = "Unknown"
+    try:
+        for line in Path("/proc/cpuinfo").read_text().splitlines():
+            if "vendor_id" in line.lower():
+                v = line.split(":")[1].strip().lower()
+                if "amd" in v:   cpu_vendor = "amd"
+                elif "intel" in v: cpu_vendor = "intel"
+            if "model name" in line.lower() and cpu_name == "Unknown":
+                cpu_name = line.split(":")[1].strip()
+    except: pass
+
+    # ── GPU detection — AMD, NVIDIA, Intel Arc ────────────────────────────────
+    has_nvidia = False
+    has_amd_gpu = False
+    has_intel_gpu = False
+    try:
+        lspci = subprocess.run(["lspci"], capture_output=True, text=True, timeout=3).stdout.lower()
+        has_nvidia    = "nvidia" in lspci
+        has_amd_gpu   = any(k in lspci for k in ["amd","radeon","amdgpu"])
+        has_intel_gpu = any(k in lspci for k in ["intel","arc","xe"])
+    except: pass
+
+    # ── Intel-specific paths ─────────────────────────────────────────────────
+    # Intel TurboBoost
+    intel_boost_path = Path("/sys/devices/system/cpu/intel_pstate/no_turbo")
+    # Intel powercap RAPL
+    intel_rapl = any(Path("/sys/class/powercap").glob("intel-rapl:*")) \
+                 if Path("/sys/class/powercap").exists() else False
+    # Intel GPU sysfs
+    intel_gpu_sysfs = bool(list(Path("/sys/class/drm").glob("card*/device/vendor"))
+                           if Path("/sys/class/drm").exists() else [])
+
+    # ── Fingerprint — multiple drivers ───────────────────────────────────────
+    fp_drivers = [
+        "/sys/bus/usb/drivers/validity-sensor",
+        "/sys/bus/usb/drivers/synaptics-usb",
+        "/sys/bus/usb/drivers/fpc_fingerprint",
+        "/sys/bus/usb/drivers/elan-fingerprint",
+        "/sys/bus/platform/drivers/fingerprint",
+    ]
+    has_fingerprint = any(Path(d).exists() and list(Path(d).glob("*"))
+                          for d in fp_drivers)
+
     def ex(p): return Path(p).exists()
 
-    # Universal
     cap = {
-        "brand":   brand,
-        "model":   _dmi("product_name"),
-        "vendor":  _dmi("sys_vendor"),
-        "family":  _dmi("product_family"),
+        # Identity
+        "brand":      brand,
+        "model":      _dmi("product_name"),
+        "vendor":     _dmi("sys_vendor"),
+        "family":     _dmi("product_family"),
+        "cpu_vendor": cpu_vendor,
+        "cpu_name":   cpu_name,
+        "has_nvidia":    has_nvidia,
+        "has_amd_gpu":   has_amd_gpu,
+        "has_intel_gpu": has_intel_gpu,
 
         # Power
-        "platform_profile":     ex("/sys/firmware/acpi/platform_profile"),
-        "conservation_mode":    CONSERVATION_MODE.exists(),
-        "rapidcharge":          RAPID_CHARGE.exists(),
-        "powerchargemode":      POWER_CHARGE_MODE.exists(),
+        "platform_profile":  ex("/sys/firmware/acpi/platform_profile"),
+        "conservation_mode": CONSERVATION_MODE.exists(),
+        "rapidcharge":       RAPID_CHARGE.exists(),
+        "powerchargemode":   POWER_CHARGE_MODE.exists(),
+
+        # CPU boost — AMD or Intel
+        "amd_boost":         AMD_BOOST.exists(),
+        "intel_boost":       intel_boost_path.exists(),
+        "intel_rapl":        intel_rapl,
 
         # Display
         "overdrive":  OVERDRIVE.exists(),
         "gsync":      GSYNC.exists(),
 
         # Input
-        "fn_lock":    FN_LOCK.exists(),
-        "camera":     CAMERA_POWER.exists(),
-        "touchpad":   TOUCHPAD.exists(),
-        "winkey":     WINKEY.exists(),
+        "fn_lock":      FN_LOCK.exists(),
+        "camera":       CAMERA_POWER.exists(),
+        "touchpad":     TOUCHPAD.exists(),
+        "winkey":       WINKEY.exists(),
         "usb_charging": USB_CHARGING.exists(),
 
         # Fan
@@ -490,7 +539,7 @@ def detect_hardware() -> dict:
         "thermalmode":   THERMAL_MODE.exists(),
 
         # Backlight
-        "kbd_backlight": ex("/sys/class/leds/platform::kbd_backlight/brightness"),
+        "kbd_backlight":    ex("/sys/class/leds/platform::kbd_backlight/brightness"),
         "screen_backlight": bool(list(Path("/sys/class/backlight").iterdir())
                                  if Path("/sys/class/backlight").exists() else []),
 
@@ -504,19 +553,18 @@ def detect_hardware() -> dict:
         "tp_micmute_led":  ex("/sys/class/leds/platform::micmute/brightness"),
 
         # Yoga-specific
-        "yoga_hinge":      ex("/sys/bus/platform/drivers/lenovo-ymc"),
-        "als_sensor":      bool(list(Path("/sys/bus/iio/devices").glob("*/in_illuminance_raw"))
-                                if Path("/sys/bus/iio/devices").exists() else []),
+        "yoga_hinge": ex("/sys/bus/platform/drivers/lenovo-ymc"),
+        "als_sensor": bool(list(Path("/sys/bus/iio/devices").glob("*/in_illuminance_raw"))
+                           if Path("/sys/bus/iio/devices").exists() else []),
 
-        # Legion-specific
-        "legionaura":      bool(subprocess.run(["which","legionaura"],
-                               capture_output=True).returncode == 0),
-        "envycontrol":     bool(subprocess.run(["which","envycontrol"],
-                               capture_output=True).returncode == 0),
+        # Tools
+        "legionaura":  bool(subprocess.run(["which","legionaura"],
+                            capture_output=True).returncode == 0),
+        "envycontrol": bool(subprocess.run(["which","envycontrol"],
+                            capture_output=True).returncode == 0),
 
         # Misc
-        "fingerprint": bool(list(Path("/sys/bus/usb/drivers/validity-sensor").glob("*"))
-                           if Path("/sys/bus/usb/drivers/validity-sensor").exists() else []),
+        "fingerprint": has_fingerprint,
         "wwan": bool(list(Path("/sys/class/net").glob("ww*"))
                     if Path("/sys/class/net").exists() else []),
     }
@@ -1867,28 +1915,59 @@ class DataSampler(QThread):
         except: return None
 
     def run(self):
+        _tick = 0
         while self._running:
             try:
+                _tick += 1
+                # Always sample — these are cheap reads
                 util          = self._read_cpu_util()
+                ac            = get_ac_connected()
+                profile       = rdsys(PLATFORM_PROFILE,"balanced")
+
+                # Medium cost — every tick
                 freq          = get_cpu_freq_ghz()
                 temp          = get_cpu_temp()
                 fan1, fan2    = get_fan_rpm()
-                ru, rt, rpct  = get_ram_info()
                 pct           = get_battery_pct()
                 bat_status    = get_battery_status()
+
+                # Slightly heavier — battery power
                 try:
                     bat_power = f"{int(Path('/sys/class/power_supply/BAT0/power_now').read_text())/1_000_000:.1f} W"
                 except: bat_power = "—"
-                boost         = rdsys(AMD_BOOST,"0")
-                gov           = get_governor()
-                epp           = get_epp()
-                ac            = get_ac_connected()
-                profile       = rdsys(PLATFORM_PROFILE,"balanced")
-                gpu           = get_gpu_info()
-                cpu_power     = self._read_cpu_power()
-                igpu_power    = get_igpu_power_w()
-                ai_engine     = get_ai_engine()
-                vrr_on, vrr_p = get_vrr_status()
+
+                # CPU power via RAPL delta
+                cpu_power = self._read_cpu_power()
+
+                # Every 2 ticks — RAM, GPU, governor, EPP (slower changing)
+                if _tick % 2 == 0 or _tick == 1:
+                    ru, rt, rpct  = get_ram_info()
+                    gpu           = get_gpu_info()
+                    boost         = rdsys(AMD_BOOST,"0")
+                    gov           = get_governor()
+                    epp           = get_epp()
+                    ai_engine     = get_ai_engine()
+                    igpu_power    = get_igpu_power_w()
+                    vrr_on, vrr_p = get_vrr_status()
+                    self._cached = {
+                        "ram_used": ru, "ram_total": rt, "ram_pct": rpct,
+                        "gpu": gpu, "boost": boost, "gov": gov, "epp": epp,
+                        "ai_engine": ai_engine, "igpu_power": igpu_power,
+                        "vrr_on": vrr_on,
+                    }
+                else:
+                    # Use cached values
+                    cached = getattr(self, '_cached', {})
+                    ru     = cached.get("ram_used",  "—")
+                    rt     = cached.get("ram_total",  "—")
+                    rpct   = cached.get("ram_pct",    0)
+                    gpu    = cached.get("gpu",        {})
+                    boost  = cached.get("boost",      "0")
+                    gov    = cached.get("gov",        "—")
+                    epp    = cached.get("epp",        "—")
+                    ai_engine  = cached.get("ai_engine",  False)
+                    igpu_power = cached.get("igpu_power", None)
+                    vrr_on     = cached.get("vrr_on",     False)
 
                 self.data_ready.emit({
                     "cpu_util":   util,  "cpu_freq":  freq,    "cpu_temp":  temp,
@@ -3283,17 +3362,26 @@ class PerformancePage(QWidget):
         lay = QVBoxLayout(self); lay.setContentsMargins(0,0,0,0); lay.addWidget(scroll)
         scroll.setWidget(inner)
 
-        # Boost
+        # Boost — detect AMD or Intel
         bc, bl = make_card("CPU Boost")
         br = QHBoxLayout()
         bt_col = QVBoxLayout(); bt_col.setSpacing(2)
-        bt = QLabel("AMD CPU Boost")
+        _intel_boost = Path("/sys/devices/system/cpu/intel_pstate/no_turbo")
+        _is_intel    = HW.get("cpu_vendor","amd") == "intel" if HW else False
+        _boost_path  = _intel_boost if _is_intel and _intel_boost.exists() else AMD_BOOST
+        _boost_label = "Intel Turbo Boost" if _is_intel else "AMD CPU Boost"
+        _boost_desc  = ("Allows CPU to exceed base clock. Intel Turbo Boost (no_turbo=0 = enabled)."
+                        if _is_intel else
+                        "Allows CPU to exceed base clock for short bursts. Auto-managed by power profile daemon.")
+        bt = QLabel(_boost_label)
         bt.setStyleSheet(f"color:{C_TEXT};font-size:13px;font-weight:bold;background:transparent;")
-        bd = QLabel("Allows CPU to exceed base clock for short bursts. Auto-managed by power profile daemon.")
+        bd = QLabel(_boost_desc)
         bd.setStyleSheet(f"color:{C_TEXT2};font-size:11px;background:transparent;"); bd.setWordWrap(True)
         bt_col.addWidget(bt); bt_col.addWidget(bd)
         br.addLayout(bt_col); br.addStretch()
-        self.boost_toggle = ToggleSwitch(AMD_BOOST)
+        # Intel no_turbo: 0=turbo ON, 1=turbo OFF — inverted from AMD boost
+        _boost_read = "1" if _is_intel and rdsys(_boost_path,"1") == "0" else rdsys(_boost_path,"0")
+        self.boost_toggle = ToggleSwitch(_boost_path, read_val=_boost_read)
         br.addWidget(self.boost_toggle, alignment=Qt.AlignmentFlag.AlignVCenter)
         bl.addLayout(br); root.addWidget(bc)
 
@@ -5395,16 +5483,17 @@ class AboutPage(QWidget):
                     break
         except: pass
 
-        # GPU — read from lspci or sysfs
+        # GPU — read from lspci, show all GPUs
         gpu_name = "Unknown"
         try:
             r = subprocess.run(["lspci"], capture_output=True, text=True, timeout=3)
+            gpus = []
             for line in r.stdout.splitlines():
-                if "VGA" in line or "3D" in line or "Display" in line:
-                    # strip the PCI address prefix
-                    gpu_name = line.split(":", 2)[-1].strip()
-                    if len(gpu_name) > 60: gpu_name = gpu_name[:60] + "…"
-                    break
+                if any(k in line for k in ["VGA","3D","Display"]):
+                    g = line.split(":",2)[-1].strip()
+                    if len(g) > 55: g = g[:55] + "…"
+                    gpus.append(g)
+            gpu_name = " + ".join(gpus) if gpus else "Unknown"
         except: pass
 
         # OS — read from /etc/os-release
