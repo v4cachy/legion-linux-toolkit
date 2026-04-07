@@ -132,8 +132,5 @@ echo -e "\n${GREEN}${BOLD}✓ Update complete!${NC}"
 VER=$(cd "$SCRIPT_DIR" 2>/dev/null && git describe --tags --always 2>/dev/null \
     || git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 echo -e "  Version : ${CYAN}${VER}${NC}"
-[[ "$BUILD_OK" == true ]] \
-    && echo "  Mode    : Standalone binaries" \
-    || echo "  Mode    : Python scripts"
 echo    "  Tray log: /tmp/legion-tray.log"
 echo -e "  Daemon  : journalctl -fu legion-toolkit.service\n"
