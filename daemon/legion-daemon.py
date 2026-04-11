@@ -141,20 +141,20 @@ PROFILES = {
     "balanced-performance": {
         "governor":     "performance",
         "boost":        "1",
-        "epp":          "balance_performance",  # custom/pink LED — slightly aggressive
-        "rapl_pl1_uw":  45_000_000,    # 45W sustained
-        "rapl_pl2_uw":  54_000_000,    # 54W burst
-        "fan_mode":     "0",           # auto
-        "description":  "Custom (Pink LED) — 45W, boost on",
+        "epp":          "performance",      # red LED = full Performance mode
+        "rapl_pl1_uw":  45_000_000,
+        "rapl_pl2_uw":  54_000_000,
+        "fan_mode":     "0",
+        "description":  "Performance (Red LED) — 45W, boost on",
     },
     "performance": {
         "governor":     "performance",
         "boost":        "1",
-        "epp":          "performance",  # max performance
-        "rapl_pl1_uw":  54_000_000,    # 54W — full cTDP
+        "epp":          "balance_performance",  # pink LED = Custom mode
+        "rapl_pl1_uw":  54_000_000,
         "rapl_pl2_uw":  54_000_000,
-        "fan_mode":     "0",           # auto
-        "description":  "Performance — 54W, boost on, full speed",
+        "fan_mode":     "0",
+        "description":  "Custom (Pink LED) — 54W, boost on",
     },
 }
 
