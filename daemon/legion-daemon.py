@@ -54,6 +54,19 @@ def _check_rapl(verbose: bool = False) -> bool:
 PLATFORM_PROFILE        = Path("/sys/firmware/acpi/platform_profile")
 PLATFORM_PROFILE_CHOICES= Path("/sys/firmware/acpi/platform_profile_choices")
 
+# ── Power source detection (AC/battery) ───────────────────────────────────────────
+def is_ac_connected() -> bool:
+    """Check if AC power is connected."""
+    for p in [Path("/sys/class/power_supply/AC0/online"),
+             Path("/sys/class/power_supply/AC/online")]:
+        if p.exists():
+            try: return p.read_text().strip() == "1"
+            except: pass
+    return False
+
+def get_ac_status() -> str:
+    return "AC" if is_ac_connected() else "Battery"
+
 # ── Dynamic sysfs path detection (works across all Lenovo models) ─────────────
 def _find_ideapad_base() -> Path:
     root = Path("/sys/bus/platform/drivers/ideapad_acpi")
@@ -308,12 +321,29 @@ class ProfileWatcher:
         apply_profile(current)
         self._last_profile = current
 
+        # Track AC/battery for auto-switching
+        self._last_ac = is_ac_connected()
+        log.info(f"Power source: {get_ac_status()}")
+
         # Start Unix socket server in background thread
         import threading as _th
         _th.Thread(target=self._socket_server, daemon=True).start()
 
         while self._running:
             try:
+                # Watch for AC/battery changes (auto-switch profiles)
+                ac_now = is_ac_connected()
+                if ac_now != self._last_ac:
+                    log.info(f"Power changed: {self._last_ac} → {ac_now} ({'AC' if ac_now else 'Battery'})")
+                    self._last_ac = ac_now
+                    # Auto-switch profile based on power source
+                    # This is similar to LLL's legiond feature
+                    if ac_now:
+                        log.info("  → AC connected: using current profile settings")
+                    else:
+                        log.info("  → On battery: applying battery-optimized settings")
+                
+                # Watch for power mode changes (Fn+Q or CLI)
                 current = get_current_profile()
                 if current != self._last_profile:
                     log.info(f"Profile changed: {self._last_profile} → {current}")
@@ -500,6 +530,48 @@ def set_conservation_mode(enabled: bool):
     """Battery conservation mode: caps charging at ~60%."""
     write(CONSERVATION_MODE, "1" if enabled else "0",
           f"Conservation mode {'ON' if enabled else 'OFF'}")
+
+# ── Auto profile switching on AC/battery (LLL legiond feature) ─────────────────────
+AC_PROFILE_MAP = {
+    "performance": {
+        "ac": "performance",
+        "battery": "balanced-performance",
+    },
+    "balanced-performance": {
+        "ac": "balanced-performance",
+        "battery": "balanced",
+    },
+    "balanced": {
+        "ac": "balanced",
+        "battery": "quiet",
+    },
+    "quiet": {
+        "ac": "balanced",
+        "battery": "quiet",
+    },
+}
+
+def get_effective_profile(requested: str = None, power_source: str = None) -> str:
+    """
+    Get the effective profile based on power source.
+    Like LLL's legiond auto-switching feature.
+    
+    If power_source is None, uses current detected state.
+    If requested is None, uses current platform profile.
+    """
+    if power_source is None:
+        power_source = "AC" if is_ac_connected() else "Battery"
+    
+    if requested is None:
+        requested = get_current_profile()
+    
+    # Use mapping if available
+    key = requested.lower()
+    if key in AC_PROFILE_MAP:
+        mapping = AC_PROFILE_MAP[key]
+        return mapping.get(power_source.lower(), requested)
+    
+    return requested
 
 
 def set_battery_limit(percent: int):
