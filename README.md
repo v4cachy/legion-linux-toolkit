@@ -6,6 +6,7 @@
 
   <p>
     <img src="https://img.shields.io/badge/version-v0.6.2--BETA-red?style=flat-square"/>
+    <a href="https://v4cachy.github.io/legion-linux-toolkit/"><img src="https://img.shields.io/badge/website-live-blue?style=flat-square"/></a>
     <img src="https://img.shields.io/badge/build-20260419-orange?style=flat-square"/>
     <img src="https://img.shields.io/badge/platform-Linux-blue?style=flat-square"/>
     <img src="https://img.shields.io/badge/desktop-KDE%20Plasma%206-purple?style=flat-square"/>
@@ -15,6 +16,20 @@
 </div>
 
 > **Status:** Beta — developed and tested on a Lenovo Legion 5 15ACH6H. Multi-brand support (ThinkPad, Yoga, IdeaPad, LOQ) is implemented via dynamic hardware detection but has had limited testing on those models. Contributions and issue reports from other Lenovo hardware are welcome.
+
+<p align="center">
+  <a href="https://v4cachy.github.io/legion-linux-toolkit/">
+    <img src="https://img.shields.io/badge/website-live-blue?style=flat-square"/>
+  </a>
+</p>
+
+---
+
+## 🌐 Website
+
+Visit our website: **[https://v4cachy.github.io/legion-linux-toolkit/](https://v4cachy.github.io/legion-linux-toolkit/)**
+
+Learn more about features, supported hardware, and installation instructions.
 
 ---
 
@@ -199,6 +214,8 @@ cd legion-linux-toolkit
 sudo bash install.sh
 ```
 
+> 💻 For more details, visit: **[https://v4cachy.github.io/legion-linux-toolkit/](https://v4cachy.github.io/legion-linux-toolkit/)**
+> 
 > ✅ Auto-detects your Lenovo brand · installs brand-specific packages · hardware scan · launches tray automatically
 > 
 > 🧙 First launch shows the **setup wizard** — choose language and run one-time hardware detection
