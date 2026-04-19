@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Legion Linux Toolkit — Dashboard GUI  v0.6.3
+Legion Linux Toolkit — Dashboard GUI  v0.6.2
 New: LLL integration, IC temp, AC/battery auto-switching, kernel 7.x fallback.
 KDE Plasma 6 / Wayland compatible.
 """
