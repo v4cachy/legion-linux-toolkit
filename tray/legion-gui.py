@@ -5759,7 +5759,7 @@ class AboutPage(QWidget):
 
         for label, value in [
             ("App",     "Legion Linux Toolkit"),
-            ("Version", "v0.6.3 - BETA 20260419"),
+            ("Version", "v0.6.2 - BETA 20260419"),
             ("Brand",   brand),
             ("Model",   model),
             ("CPU",     cpu_name),
