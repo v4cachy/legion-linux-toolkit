@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ══════════════════════════════════════════════════════════════════════════════
-# Legion Linux Toolkit — Uninstaller  v0.6.1
+# Legion Linux Toolkit — Uninstaller  v0.6.2
 # ══════════════════════════════════════════════════════════════════════════════
 set -euo pipefail
 
@@ -14,7 +14,7 @@ info() { echo -e "  ${CYAN}→${NC}  $*"; }
 
 echo -e "\n${BOLD}╔══════════════════════════════════════════╗"
 echo      "║   Legion Linux Toolkit — Uninstaller     ║"
-echo      "║              v0.6.1                      ║"
+echo      "║              v0.6.2                      ║"
 echo -e   "╚══════════════════════════════════════════╝${NC}\n"
 
 read -rp "  Remove Legion Linux Toolkit completely? [y/N] " ans
