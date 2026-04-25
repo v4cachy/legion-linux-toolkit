@@ -5269,7 +5269,7 @@ class FanPage(QWidget):
         except:
             pass
 
-        from tray.fancurve_window import show_fancurve_window
+        from fancurve_window import show_fancurve_window
         show_fancurve_window()
 
     def _build(self):
