@@ -247,6 +247,7 @@ Removes everything — service, udev rules, polkit, autostart, CLI. Optionally r
 - ⚡ Uses ToggleSwitch for better UI experience in Home page
 - 🐛 Fixed nvidia_wmi_ec_backlight reference removed from G-Sync
 - 💡 **Fixed Brightness Backlight** — now uses correct path (`/sys/class/backlight/`)
+- 🎛️ **Added Manual button** for 10-point fan curve editor in Fan page
 - 🎮 Added .gitignore
 
 ---
