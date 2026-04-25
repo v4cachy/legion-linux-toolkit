@@ -3316,13 +3316,8 @@ class HomePage(QWidget):
             "Switches GPU mode via envycontrol. Requires reboot to take effect.", self.gpu_mode_combo))
         gl.addWidget(make_div())
 
-        # G-Sync Toggle — via ToggleSwitch with notification
-        _gsync_enabled = get_gsync_status()
-        _gsync_tog = ToggleSwitch(path=GSYNC, read_val=rdsys(GSYNC,"0"),
-                               on_change=lambda val: send_notif(
-                                   "G-Sync",
-                                   f"G-Sync {'enabled' if val else 'disabled'} — {'variable' if val else 'fixed'} refresh rate",
-                                   "display"))
+        # G-Sync Toggle — via ToggleSwitch
+        _gsync_tog = ToggleSwitch(path=GSYNC, read_val=rdsys(GSYNC,"0"))
         gl.addWidget(_setting_row("🔄", "G-Sync",
             "NVIDIA G-Sync variable refresh rate. Enable for smoother gaming.", _gsync_tog))
         gl.addWidget(make_div())
