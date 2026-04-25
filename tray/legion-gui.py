@@ -5379,12 +5379,11 @@ class FanPage(QWidget):
             f"QPushButton{{background:{C_CARD2};color:{C_TEXT2};"
             f"border:1px solid {C_BORDER};border-radius:8px;"
             f"font-size:12px;font-weight:bold;}}"
-            f"QPushButton:checked{{background:transparent;color:{C_ORANGE};"
-            f"border:2px solid {C_ORANGE};}}"
+            f"QPushButton:checked{{background:{C_ORANGE};color:{C_BG};}}"
             f"QPushButton:hover:!checked{{border:1px solid #555;color:{C_TEXT};}}"
         )
         self._manual_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self._manual_btn.clicked.connect(lambda: self._set_mode("manual"))
+        self._manual_btn.clicked.connect(self._open_fan_curve_window)
 
         self._full_btn = QPushButton("🌀  Full Speed")
         self._full_btn.setCheckable(True); self._full_btn.setChecked(False)
@@ -5747,7 +5746,7 @@ class FanPage(QWidget):
         self._mode_desc.setText(
             "Firmware controls fans based on CPU/GPU temperature. Recommended."
             if mode == "auto" else
-            "Manual 10-point fan curve editor. Set your custom fan curve below."
+            "Opens fan curve editor in new window."
             if mode == "manual" else
             "Both fans locked to 100% — maximum cooling, louder."
         )
@@ -5793,15 +5792,24 @@ class FanPage(QWidget):
 # ══════════════════════════════════════════════════════════════════════════════
 class ActionsPage(QWidget):
 
-    def _on_fan_result(self, ok: bool, msg: str):
-        color = C_GREEN if ok else C_ORANGE
-        self._fan_status.setStyleSheet(
-            f"color:{color};font-size:11px;font-weight:bold;background:transparent;")
-        self._fan_status.setText(msg)
+    def refresh(self, d=None):
+        self._refresh_rpm()
 
-    def _emit(self, ok: bool, msg: str):
-        """Thread-safe — emits signal which posts to main thread."""
-        self._fan_result.emit(ok, msg)
+# ══════════════════════════════════════════════════════════════════════════════
+        color = C_GREEN if ok else C_ORANGE
+        self._status.setStyleSheet(
+            f"color:{color};font-size:11px;font-weight:bold;background:transparent;")
+        self._status.setText(msg)
+
+    def _open_fan_curve_window(self):
+        """Open fan curve editor in a new window."""
+        self._manual_btn.setChecked(True)
+        self._set_mode("auto")
+        send_notif("Fan Curve Editor", "Opening fan curve editor in new window", "fan")
+
+        # Import and show the window
+        from tray.fancurve_window import show_fancurve_window
+        show_fancurve_window()
 
     def _build(self):
         scroll = QScrollArea(self); scroll.setWidgetResizable(True)
