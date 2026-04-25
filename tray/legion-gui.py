@@ -5260,6 +5260,18 @@ class FanPage(QWidget):
     def _emit(self, ok: bool, msg: str):
         self._fan_result.emit(ok, msg)
 
+    def _open_fan_curve_window(self):
+        """Open fan curve editor in a new window."""
+        self._manual_btn.setChecked(True)
+        self._set_mode("auto")
+        try:
+            send_notif("Fan Curve Editor", "Opening fan curve editor in new window", "fan")
+        except:
+            pass
+
+        from tray.fancurve_window import show_fancurve_window
+        show_fancurve_window()
+
     def _build(self):
         scroll = QScrollArea(self); scroll.setWidgetResizable(True)
         scroll.setStyleSheet("border:none;background:transparent;")
