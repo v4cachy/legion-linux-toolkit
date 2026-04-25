@@ -3328,13 +3328,6 @@ class HomePage(QWidget):
             "Reduce display response time latency.", od_tog))
         gl.addWidget(make_div())
 
-        # Brightness Backlight toggle (nvidia_wmi_ec_backlight)
-        if NVIDIA_BACKLIGHT.exists():
-            bl_tog = ToggleSwitch(path=NVIDIA_BACKLIGHT, read_val=rdsys(NVIDIA_BACKLIGHT,"0"))
-            gl.addWidget(_setting_row("💡", "Brightness Backlight",
-                "Control display backlight via nvidia_wmi_ec_backlight.", bl_tog))
-            gl.addWidget(make_div())
-
         # Overclock GPU row — button to navigate to OC page
         oc_btn = QPushButton("Open OC →")
         oc_btn.setFixedSize(110, 34)
