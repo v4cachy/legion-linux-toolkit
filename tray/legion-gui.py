@@ -926,9 +926,8 @@ def apply_profile(name: str):
         resp = c.recv(32).decode().strip()
         c.close()
         if resp == "ok":
-            return
-        # If daemon returned error, fall through to pkexec
-    except Exception:
+            return True, f"Profile set to {name}"
+    except Exception as e:
         pass
     # Fallback: pkexec direct write
     # Resolve alias: "quiet" → "low-power" for this machine's firmware
@@ -949,8 +948,9 @@ def apply_profile(name: str):
             ["pkexec","sh","-c",f"echo {fw} > /sys/firmware/acpi/platform_profile"],
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
         )
-    except Exception:
-        pass
+        return True, f"Profile set to {name}"
+    except Exception as e:
+        return False, str(e)
 
 def find_hwmon(name):
     for base in [Path("/sys/class/hwmon"),Path("/sys/devices/virtual/hwmon")]:
@@ -3372,9 +3372,9 @@ class HomePage(QWidget):
         p = self.power_combo.currentData()
         if not p:  # fallback by position
             p = PROFILES[idx] if idx < len(PROFILES) else PROFILES[0]
-        apply_profile(p)
+        ok, msg = apply_profile(p)
         send_notif(f"Power Mode: {PROFILE_LABELS.get(p,p)}",
-                   PROFILE_DESCS.get(p,""), "battery")
+                   msg if not ok else PROFILE_DESCS.get(p,""), "battery" if ok else "dialog-error")
 
     def _on_bat_combo(self, idx):
         """Battery Mode: 0=Normal 1=Conservation 2=Rapid"""
