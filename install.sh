@@ -146,13 +146,13 @@ cat > /etc/xdg/autostart/legion-toolkit.desktop << EOF
 [Desktop Entry]
 Type=Application
 Name=Legion Linux Toolkit
-Exec=$TRAY_EXEC
+Exec=pkexec $TRAY_EXEC
 Icon=computer
 Terminal=false
 Categories=System;
 X-GNOME-Autostart-enabled=true
 EOF
-ok "Autostart configured"
+ok "Autostart configured (using pkexec)"
 
 # ── 8. udev + systemd ─────────────────────────────────────────────────────────
 echo -e "${BOLD}[8/8] Installing udev rules and service…${NC}"
@@ -178,21 +178,9 @@ systemctl is-active --quiet legion-toolkit.service \
 [[ -n "$REAL_USER" ]] && \
     rm -f "/home/${REAL_USER}/.config/legion-toolkit/first_run_done" 2>/dev/null || true
 
-if [[ -n "$REAL_USER" ]]; then
-    REAL_UID=$(id -u "$REAL_USER")
-    XDGRT="/run/user/${REAL_UID}"
-    WDISP=$(ls "${XDGRT}/wayland-"* 2>/dev/null | head -1 | xargs basename 2>/dev/null || echo "wayland-0")
-    sudo -u "$REAL_USER" \
-        XDG_RUNTIME_DIR="$XDGRT" WAYLAND_DISPLAY="$WDISP" QT_QPA_PLATFORM="wayland" \
-        nohup "$TRAY_EXEC" > /tmp/legion-tray.log 2>&1 &
-    sleep 1
-    pgrep -f "legion-tray.py" > /dev/null \
-        && ok "Tray launched" \
-        || warn "Tray did not start — cat /tmp/legion-tray.log"
-fi
-
 echo -e "\n${GREEN}${BOLD}✓ Installation complete!${NC}"
 echo -e "  Brand : ${CYAN}$BRAND${NC}"
 echo    "  Update: sudo bash update.sh"
 echo    "  Logs  : journalctl -fu legion-toolkit.service"
+echo    "  Tray  : Run 'legion-toolkit' or reboot to start automatically"
 echo ""
