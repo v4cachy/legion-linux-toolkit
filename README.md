@@ -19,7 +19,6 @@
 
 <p align="center">
   <a href="https://v4cachy.github.io/legion-linux-toolkit/">
-    <img src="https://img.shields.io/badge/website-live-blue?style=flat-square"/>
   </a>
 </p>
 
