@@ -37,7 +37,16 @@ GUI_BIN           = Path("/usr/lib/legion-toolkit/legion-gui.py")
 PLATFORM_PROFILE  = Path("/sys/firmware/acpi/platform_profile")
 PLATFORM_CHOICES  = Path("/sys/firmware/acpi/platform_profile_choices")
 IDEAPAD_BASE      = Path("/sys/bus/platform/drivers/ideapad_acpi/VPC2004:00")
-LEGION_BASE       = Path("/sys/devices/pci0000:00/0000:00:14.3/PNP0C09:00")
+def _find_legion_base() -> Path:
+    for pattern in ["pci*/*/*/PNP0C09:*", "pci*/*/*/VPC2004:*"]:
+        try:
+            for p in Path("/sys/devices").glob(pattern):
+                if (p / "hwmon").exists() or (p / "fan_fullspeed").exists():
+                    return p
+        except: pass
+    return Path("/sys/devices/pci0000:00/0000:00:14.3/PNP0C09:00")
+
+LEGION_BASE       = _find_legion_base()
 AMD_BOOST         = Path("/sys/devices/system/cpu/cpufreq/boost")
 BAT               = Path("/sys/class/power_supply/BAT0")
 
@@ -49,7 +58,15 @@ TOUCHPAD          = LEGION_BASE  / "touchpad"
 RAPID_CHARGE      = LEGION_BASE  / "rapidcharge"
 WINKEY            = LEGION_BASE  / "winkey"
 OVERDRIVE         = LEGION_BASE  / "overdrive"
-GSYNC             = Path("/sys/devices/pci0000:00/0000:00:14.3/PNP0C09:00/gsync")
+def _find_gsync_path() -> Path:
+    for pattern in ["pci*/*/*/PNP0C09:*/gsync", "pci*/*/*/VPC2004:*/gsync"]:
+        try:
+            for p in Path("/sys/devices").glob(pattern):
+                return p
+        except: pass
+    return Path("/sys/devices/pci0000:00/0000:00:14.3/PNP0C09:00/gsync")
+
+GSYNC             = _find_gsync_path()
 NVIDIA_BACKLIGHT = Path("/sys/class/backlight/nvidia_wmi_ec_backlight/brightness")
 POWER_CHARGE_MODE = LEGION_BASE  / "powerchargemode"
 THERMAL_MODE      = LEGION_BASE  / "thermalmode"

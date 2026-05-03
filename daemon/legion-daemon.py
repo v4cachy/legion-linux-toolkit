@@ -79,10 +79,15 @@ def _find_ideapad_base() -> Path:
     return Path("/sys/bus/platform/drivers/ideapad_acpi/VPC2004:00")
 
 def _find_legion_feature(name: str) -> Path:
-    """Find a legion_laptop feature file anywhere in sysfs (any PCI slot, any model)."""
-    # Try all PNP0C09 devices under any PCI bus
+    """Find a legion_laptop feature file anywhere in sysfs (any PCI slot, any model, kernel 7.x VPC2004 support)."""
+    # Try all PNP0C09 and VPC2004 devices under any PCI bus
     try:
         for p in Path("/sys/devices").glob("pci*/*/*/PNP0C09:*"):
+            f = p / name
+            if f.exists(): return f
+    except: pass
+    try:
+        for p in Path("/sys/devices").glob("pci*/*/*/VPC2004:*"):
             f = p / name
             if f.exists(): return f
     except: pass

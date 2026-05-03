@@ -79,10 +79,12 @@ def _find_feature(feature: str) -> "Path | None":
                     search_bases.append(d)
             except: pass
 
-    # 3. PNP0C09 device — scan all PCI buses (different slot on different models)
+    # 3. PNP0C09/VPC2004 device — scan all PCI buses (different slot on different models, kernel 7.x uses VPC2004)
     try:
         for pci in Path("/sys/devices").glob("pci*"):
             for dev in pci.glob("*/PNP0C09:*"):
+                search_bases.append(dev)
+            for dev in pci.glob("*/VPC2004:*"):
                 search_bases.append(dev)
     except: pass
 
@@ -135,19 +137,33 @@ IDEAPAD_BASE      = (lambda: next(
 ) if Path("/sys/bus/platform/drivers/ideapad_acpi").exists()
   else Path("/sys/bus/platform/drivers/ideapad_acpi/VPC2004:00"))()
 
-# LEGION_SYS_BASEPATH — find LLL device path
+# LEGION_SYS_BASEPATH — find LLL device path (supports PNP0C09 and VPC2004 for kernel 7.x)
 def _find_legion_base() -> Path:
     base = Path("/sys/module/legion_laptop/drivers/platform:legion")
     if base.exists():
         for d in base.iterdir():
-            if d.name.startswith("PNP0C09") and (d / "hwmon").exists():
+            if (d.name.startswith("PNP0C09") or d.name.startswith("VPC2004")) and (d / "hwmon").exists():
                 return d
+    # Fallback: scan all PCI buses for either device ID
+    try:
+        for p in Path("/sys/devices").glob("pci*/*/*/*"):
+            if (p.name.startswith("PNP0C09") or p.name.startswith("VPC2004")) and (p / "hwmon").exists():
+                return p
+    except: pass
     return Path("/sys/devices/pci0000:00/0000:00:14.3/PNP0C09:00")
 
 LEGION_SYS_BASEPATH = _find_legion_base()
 
-# G-Sync — use direct path that exists on Legion laptops
-_GSYNC_PATH = Path("/sys/devices/pci0000:00/0000:00:14.3/PNP0C09:00/gsync")
+# G-Sync — find dynamically (PNP0C09 or VPC2004 for kernel 7.x)
+def _find_gsync_path() -> Path:
+    for pattern in ["*/PNP0C09:*/gsync", "*/VPC2004:*/gsync"]:
+        try:
+            for p in Path("/sys/devices").glob(pattern):
+                return p.parent / "gsync"
+        except: pass
+    return Path("/sys/devices/pci0000:00/0000:00:14.3/PNP0C09:00/gsync")
+
+_GSYNC_PATH = _find_gsync_path()
 
 CONSERVATION_MODE = _find_ideapad("conservation_mode") or IDEAPAD_BASE / "conservation_mode"
 CAMERA_POWER      = _find_ideapad("camera_power")      or IDEAPAD_BASE / "camera_power"
@@ -158,21 +174,18 @@ TOUCHPAD          = _find_feature("touchpad")           or Path("/sys/bus/platfo
 RAPID_CHARGE      = _find_feature("rapidcharge")        or Path("/sys/bus/platform/drivers/ideapad_acpi/VPC2004:00/rapidcharge")
 WINKEY            = _find_feature("winkey")             or Path("/tmp/nonexistent_winkey")
 OVERDRIVE         = _find_feature("overdrive")          or Path("/tmp/nonexistent_overdrive")
-GSYNC             = Path("/sys/devices/pci0000:00/0000:00:14.3/PNP0C09:00/gsync")
+GSYNC             = _find_gsync_path()
 NVIDIA_BACKLIGHT = Path("/sys/class/backlight/nvidia_wmi_ec_backlight/brightness")
 POWER_CHARGE_MODE = _find_feature("powerchargemode")    or Path("/tmp/nonexistent_pcm")
 THERMAL_MODE      = _find_feature("thermalmode")        or Path("/tmp/nonexistent_thermalmode")
 FAN_FULLSPEED     = _find_feature("fan_fullspeed")      or Path("/tmp/nonexistent_fan_fullspeed")
 
-# LEGION_BASE — find the PNP0C09 device directory (any PCI slot, any generation)
+# LEGION_BASE — find the legion device directory (PNP0C09 or VPC2004 for kernel 7.x, any PCI slot)
 LEGION_BASE = (lambda: next(
-    (p for p in Path("/sys/devices").glob("pci*/*/*/PNP0C09:*")
+    (p for p in list(Path("/sys/devices").glob("pci*/*/*/PNP0C09:*")) + list(Path("/sys/devices").glob("pci*/*/*/VPC2004:*"))
      if (p / "fan_fullspeed").exists() or (p / "overdrive").exists()),
     Path("/sys/devices/pci0000:00/0000:00:14.3/PNP0C09:00")
 ))()
-
-# G-Sync — direct path to gsync sysfs node
-_GSYNC_PATH = Path("/sys/devices/pci0000:00/0000:00:14.3/PNP0C09:00/gsync")
 
 def get_gsync_status() -> bool:
     """Check if G-Sync (hybrid mode) is enabled."""
