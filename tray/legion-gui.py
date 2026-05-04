@@ -2971,8 +2971,10 @@ def _mk_lineedit(text: str = "", width: int = 100, placeholder: str = "") -> "QL
     return le
 
 def make_div():
-    f = QFrame(); f.setFrameShape(QFrame.Shape.HLine)
-    f.setFixedHeight(1); f.setStyleSheet(f"background:{C_BORDER};border:none;")
+    """Invisible spacer — no visible grid lines."""
+    f = QWidget()
+    f.setFixedHeight(4)
+    f.setStyleSheet("background:transparent;")
     return f
 
 def make_card(title=""):
@@ -3209,22 +3211,20 @@ class HomePage(QWidget):
             return w, l
 
         def col_hdr(text, badge_widget=None):
-            row = QHBoxLayout(); row.setSpacing(8); row.setContentsMargins(0,0,0,10)
+            row = QHBoxLayout(); row.setSpacing(8); row.setContentsMargins(0,0,0,8)
             lbl = QLabel(text)
             lbl.setStyleSheet(f"color:{C_TEXT};font-size:13px;font-weight:600;background:transparent;")
             row.addWidget(lbl)
             if badge_widget: row.addWidget(badge_widget)
             row.addStretch()
-            div = QFrame(); div.setFrameShape(QFrame.Shape.HLine); div.setFixedHeight(1)
-            div.setStyleSheet(f"background:{C_BORDER};border:none;")
             hdr_w = QWidget(); hdr_w.setStyleSheet("background:transparent;")
-            hdr_l = QVBoxLayout(hdr_w); hdr_l.setContentsMargins(0,0,0,6); hdr_l.setSpacing(3)
-            hdr_l.addLayout(row); hdr_l.addWidget(div)
+            hdr_l = QVBoxLayout(hdr_w); hdr_l.setContentsMargins(0,0,0,4); hdr_l.setSpacing(3)
+            hdr_l.addLayout(row)
             return hdr_w
 
         def vdiv():
-            f = QFrame(); f.setFrameShape(QFrame.Shape.VLine); f.setFixedWidth(1)
-            f.setStyleSheet(f"background:{C_BORDER};border:none;")
+            f = QWidget(); f.setFixedWidth(1)
+            f.setStyleSheet("background:transparent;")
             f.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Expanding)
             return f
 
@@ -3628,8 +3628,7 @@ class BatteryPage(QWidget):
         left.addWidget(self.pct_lbl); left.addWidget(self.status_lbl)
         left.addWidget(self.health_lbl); left.addStretch()
         top.addLayout(left)
-        vd = QFrame(); vd.setFrameShape(QFrame.Shape.VLine); vd.setFixedWidth(1)
-        vd.setStyleSheet(f"background:{C_BORDER};border:none;"); top.addWidget(vd)
+        vd = QWidget(); vd.setFixedWidth(1); vd.setStyleSheet("background:transparent;"); top.addWidget(vd)
         right = QVBoxLayout(); right.setSpacing(4)
         self.b_charge = StatRow("Charge",  "—", 0, 130, 110, C_GREEN)
         self.b_health = StatRow("Health",  "—", 0, 130)
@@ -6272,10 +6271,6 @@ class AboutPage(QWidget):
         ver.setStyleSheet(f"color:{C_TEXT2};font-size:12px;font-weight:500;background:transparent;")
         ver.setAlignment(Qt.AlignmentFlag.AlignCenter)
         header_l.addWidget(ver)
-
-        div = QFrame(); div.setFrameShape(QFrame.Shape.HLine); div.setFixedHeight(1)
-        div.setStyleSheet(f"background:{C_BORDER};border:none;")
-        header_l.addWidget(div)
 
         lay.addWidget(header_w)
 
