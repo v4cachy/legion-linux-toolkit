@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Legion Linux Toolkit — Dashboard GUI  v0.6.2
+Legion Linux Toolkit — Dashboard GUI  v0.6.3
 New: LLL integration, IC temp, AC/battery auto-switching, kernel 7.x fallback.
 KDE Plasma 6 / Wayland compatible.
 """
@@ -6262,7 +6262,7 @@ class AboutPage(QWidget):
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         header_l.addWidget(title)
 
-        ver = QLabel("v0.6.2 · BETA 20260419")
+        ver = QLabel("v0.6.3 · BETA 20260504")
         ver.setStyleSheet(f"color:{C_TEXT2};font-size:12px;font-weight:500;background:transparent;")
         ver.setAlignment(Qt.AlignmentFlag.AlignCenter)
         header_l.addWidget(ver)

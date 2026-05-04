@@ -5,7 +5,7 @@
   <p>Developed on CachyOS · KDE Plasma 6 · Wayland — works on any Arch-based distro</p>
 
   <p>
-    <img src="https://img.shields.io/badge/version-v0.6.2--BETA-red?style=flat-square"/>
+    <img src="https://img.shields.io/badge/version-v0.6.3--BETA-red?style=flat-square"/>
     <a href="https://v4cachy.github.io/legion-linux-toolkit/"><img src="https://img.shields.io/badge/website-live-blue?style=flat-square"/></a>
     <img src="https://img.shields.io/badge/build-20260419-orange?style=flat-square"/>
     <img src="https://img.shields.io/badge/platform-Linux-blue?style=flat-square"/>

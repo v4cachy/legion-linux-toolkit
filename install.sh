@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ══════════════════════════════════════════════════════════════════════════════
-# Legion Linux Toolkit — Installer  v0.6.2
+# Legion Linux Toolkit — Installer  v0.6.3
 # Supports: Legion, LOQ, ThinkPad, ThinkBook, Yoga, IdeaPad
 # ══════════════════════════════════════════════════════════════════════════════
 set -euo pipefail
@@ -19,7 +19,7 @@ REAL_USER="${SUDO_USER:-$(logname 2>/dev/null || echo "")}"
 
 echo -e "\n${BOLD}╔══════════════════════════════════════════╗"
 echo      "║   Legion Linux Toolkit — Installer       ║"
-echo      "║              v0.6.2                      ║"
+echo      "║              v0.6.3                      ║"
 echo -e   "╚══════════════════════════════════════════╝${NC}\n"
 
 # ── Detect Lenovo brand ───────────────────────────────────────────────────────

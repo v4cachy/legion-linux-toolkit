@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ══════════════════════════════════════════════════════════════════════════════
-# Legion Linux Toolkit — Updater  v0.6.2
+# Legion Linux Toolkit — Updater  v0.6.3
 # Pulls latest from GitHub and reinstalls all toolkit files.
 # ══════════════════════════════════════════════════════════════════════════════
 set -euo pipefail
@@ -20,7 +20,7 @@ REAL_USER="${SUDO_USER:-$(logname 2>/dev/null || echo "")}"
 
 echo -e "\n${BOLD}╔══════════════════════════════════════════╗"
 echo      "║   Legion Linux Toolkit — Updater         ║"
-echo      "║              v0.6.2                      ║"
+echo      "║              v0.6.3                      ║"
 echo -e   "╚══════════════════════════════════════════╝"
 echo -e "  Repo: ${CYAN}${REPO_URL}${NC}\n"
 
