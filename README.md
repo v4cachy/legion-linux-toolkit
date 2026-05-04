@@ -7,7 +7,7 @@
   <p>
     <img src="https://img.shields.io/badge/version-v0.6.3--BETA-red?style=flat-square"/>
     <a href="https://v4cachy.github.io/legion-linux-toolkit/"><img src="https://img.shields.io/badge/website-live-blue?style=flat-square"/></a>
-    <img src="https://img.shields.io/badge/build-20260419-orange?style=flat-square"/>
+    <img src="https://img.shields.io/badge/build-20260504-orange?style=flat-square"/>
     <img src="https://img.shields.io/badge/platform-Linux-blue?style=flat-square"/>
     <img src="https://img.shields.io/badge/desktop-KDE%20Plasma%206-purple?style=flat-square"/>
     <img src="https://img.shields.io/badge/python-PyQt6-green?style=flat-square"/>
@@ -132,7 +132,7 @@ Learn more about features, supported hardware, and installation instructions.
 <summary><b>⚙️ System Page</b></summary>
 
 - 🔒 Fn Lock, Super Key, Touchpad, Camera toggles
-- 🎨 Theme — Dark / Dark Dimmed / OLED Black
+- 🎨 Theme — Dark / Dark Dimmed / OLED Black / Light
 - 🔴 **ThinkPad only** — TrackPoint sensitivity & speed sliders
 - 💡 **ThinkPad only** — ThinkLight & Mic Mute LED toggles
 - 🔄 **Yoga only** — Hinge mode display, orientation lock toggle
@@ -237,6 +237,31 @@ sudo bash uninstall.sh
 ```
 
 Removes everything — service, udev rules, polkit, autostart, CLI. Optionally removes user config.
+
+---
+
+## 🆕 What's New (v0.6.3 — 20260504)
+
+### 🎨 Complete UI Overhaul
+- **4 new themes** — Dark, Dark Dimmed, OLED Black, and Light
+- **Redesigned sidebar** — wider (220px) with logo, text labels, and hover/active states
+- **Modern card design** — rounded corners (12px), consistent spacing, no grid lines
+- **Polished typography** — consistent font weights (500/600), unified sizes (12px/13px)
+- **Clean layout** — removed all QFrame dividers, grid lines, and structural borders
+- **Perfect alignment** — fixed label widths, consistent margins (24px) across all pages
+
+### 🖥️ Component Updates
+- **Toggles** — larger (56×32), smoother animation, accent color when ON
+- **Sliders** — thicker track, larger handle, hover state
+- **Buttons & Combos** — modern border-radius (8px), accent hover effects
+- **Status Badges** — refined styling with proper spacing
+- **Fan Presets** — horizontal button rows instead of grid layout
+- **About Page** — clean vertical info rows with fixed-width labels
+
+### 🛠️ Infrastructure
+- Version bumped to **v0.6.3**
+- All install/update/uninstall scripts updated
+- Zero structural borders — clean card-only visual hierarchy
 
 ---
 
