@@ -2971,10 +2971,7 @@ def _mk_lineedit(text: str = "", width: int = 100, placeholder: str = "") -> "QL
     return le
 
 def make_div():
-    """Invisible spacer — no visible grid lines."""
-    f = QWidget()
-    f.setFixedHeight(4)
-    f.setStyleSheet("background:transparent;")
+    f = QWidget(); f.setFixedHeight(6); f.setStyleSheet("background:transparent;")
     return f
 
 def make_card(title=""):
@@ -3223,8 +3220,7 @@ class HomePage(QWidget):
             return hdr_w
 
         def vdiv():
-            f = QWidget(); f.setFixedWidth(1)
-            f.setStyleSheet("background:transparent;")
+            f = QWidget(); f.setFixedWidth(12); f.setStyleSheet("background:transparent;")
             f.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Expanding)
             return f
 
@@ -3628,7 +3624,7 @@ class BatteryPage(QWidget):
         left.addWidget(self.pct_lbl); left.addWidget(self.status_lbl)
         left.addWidget(self.health_lbl); left.addStretch()
         top.addLayout(left)
-        vd = QWidget(); vd.setFixedWidth(1); vd.setStyleSheet("background:transparent;"); top.addWidget(vd)
+        vd = QWidget(); vd.setFixedWidth(12); vd.setStyleSheet("background:transparent;"); top.addWidget(vd)
         right = QVBoxLayout(); right.setSpacing(4)
         self.b_charge = StatRow("Charge",  "—", 0, 130, 110, C_GREEN)
         self.b_health = StatRow("Health",  "—", 0, 130)
