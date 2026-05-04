@@ -35,7 +35,7 @@ except ImportError:
 DAEMON_SOCKET     = "/run/legion-toolkit.sock"
 GUI_BIN           = Path("/usr/lib/legion-toolkit/legion-gui.py")
 IDEAPAD_BASE      = Path("/sys/bus/platform/drivers/ideapad_acpi/VPC2004:00")
-_POWERMODE_MAP = {1: "quiet", 2: "balanced", 3: "performance", 255: "performance"}
+_POWERMODE_MAP = {1: "quiet", 2: "balanced", 3: "performance", 255: "custom"}
 
 def _find_legion_base() -> Path:
     for pattern in ["pci*/*/*/PNP0C09:*", "pci*/*/*/VPC2004:*"]:
@@ -148,10 +148,17 @@ _PROFILE_INFO = {
         "letter": "P",
         "desc":   "54W · Gaming",
     },
+    "custom": {
+        "label":  "Custom",
+        "icon":   "🩷",
+        "color":  "#ff69b4",
+        "letter": "C",
+        "desc":   "54W · Custom",
+    },
 }
 
 def _get_profiles() -> list[str]:
-    return ["quiet", "balanced", "performance"]
+    return ["quiet", "balanced", "performance", "custom"]
 
 def _label(sysfs_name: str) -> str:
     return _PROFILE_INFO.get(sysfs_name, {}).get("label", sysfs_name.title())
@@ -201,7 +208,7 @@ def _apply_profile(sysfs_name: str):
     if resp == "ok":
         return
     # fallback — write powermode directly
-    rev = {"quiet": 1, "balanced": 2, "performance": 3}
+    rev = {"quiet": 1, "balanced": 2, "performance": 3, "custom": 255}
     try:
         val = rev.get(sysfs_name, 2)
         LEGION_POWERMODE.write_text(f"{val}\n")

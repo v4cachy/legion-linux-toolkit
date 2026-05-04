@@ -56,8 +56,8 @@ PLATFORM_PROFILE_CHOICES= Path("/sys/firmware/acpi/platform_profile_choices")
 
 # LLL (LenovoLegionLinux) powermode — direct read from BIOS/EC via LLL driver
 # 1=quiet, 2=balanced, 3=performance, 255=custom
-_POWERMODE_MAP = {1: "quiet", 2: "balanced", 3: "performance", 255: "performance"}
-_POWERMODE_MAP_REV = {"quiet": 1, "balanced": 2, "performance": 3}
+_POWERMODE_MAP = {1: "quiet", 2: "balanced", 3: "performance", 255: "custom"}
+_POWERMODE_MAP_REV = {"quiet": 1, "balanced": 2, "performance": 3, "custom": 255}
 
 def _find_legion_powermode() -> Path:
     """Find the LLL powermode sysfs file dynamically."""
@@ -208,6 +208,15 @@ PROFILES = {
         "rapl_pl2_uw":  54_000_000,
         "fan_mode":     "0",
         "description":  "Performance — 54W, boost on",
+    },
+    "custom": {
+        "governor":     "performance",
+        "boost":        "1",
+        "epp":          "performance",
+        "rapl_pl1_uw":  54_000_000,
+        "rapl_pl2_uw":  54_000_000,
+        "fan_mode":     "0",
+        "description":  "Custom — 54W, boost on, user overrides allowed",
     },
 }
 
@@ -530,11 +539,13 @@ def _notify(profile: str):
         "quiet": "audio-volume-muted",
         "balanced": "battery-good",
         "performance": "utilities-system-monitor",
+        "custom": "utilities-system-monitor",
     }
     labels = {
         "quiet": "🔇 Quiet Mode  —  15W, boost off",
         "balanced": "⚖️ Balanced Mode  —  35W",
         "performance": "🚀 Performance Mode  —  54W",
+        "custom": "🎨 Custom Mode  —  54W, user config",
     }
     try:
         session = _get_user_session()
@@ -572,6 +583,7 @@ AC_PROFILE_MAP = {
     "quiet":       { "ac": "balanced", "battery": "quiet" },
     "balanced":    { "ac": "balanced", "battery": "quiet" },
     "performance": { "ac": "performance", "battery": "balanced" },
+    "custom":      { "ac": "custom", "battery": "performance" },
 }
 
 def get_effective_profile(requested: str = None, power_source: str = None) -> str:

@@ -42,7 +42,7 @@ from PyQt6.QtGui import QColor, QPainter, QPen, QBrush, QFont, QCursor
 # PATHS
 # ══════════════════════════════════════════════════════════════════════════════
 PLATFORM_PROFILE  = Path("/sys/firmware/acpi/platform_profile")
-_POWERMODE_MAP = {1: "quiet", 2: "balanced", 3: "performance", 255: "performance"}
+_POWERMODE_MAP = {1: "quiet", 2: "balanced", 3: "performance", 255: "custom"}
 
 def _find_legion_powermode() -> Path:
     for pattern in ["pci*/*/*/PNP0C09:*", "pci*/*/*/VPC2004:*"]:
@@ -807,7 +807,7 @@ RGB_PRESETS = {
 
 # Detect actual profile names from the kernel (low-power vs quiet)
 def _detect_profiles():
-    return ["quiet", "balanced", "performance"]
+    return ["quiet", "balanced", "performance", "custom"]
 
 PROFILES       = _detect_profiles()
 
@@ -816,21 +816,25 @@ PROFILE_LABELS = {
     "quiet":       "Quiet",
     "balanced":    "Balanced",
     "performance": "Performance",
+    "custom":      "Custom",
 }
 PROFILE_ICONS = {
     "quiet":       "🔵",
     "balanced":    "⚪",
     "performance": "🔴",
+    "custom":      "🩷",
 }
 PROFILE_DESCS = {
     "quiet":       "15W · Boost OFF",
     "balanced":    "35W · Boost ON",
     "performance": "54W · Boost ON",
+    "custom":      "54W · Custom Config",
 }
 PROFILE_COLORS = {
     "quiet":       "#4a9eff",
     "balanced":    "#d0d0d0",
     "performance": "#ff4757",
+    "custom":      "#ff69b4",
 }
 
 EPP_VALUES = ["default","performance","balance_performance","balance_power","power"]
@@ -955,7 +959,7 @@ def apply_profile(name: str):
     except Exception as e:
         pass
     # Fallback: write powermode directly
-    rev = {"quiet": 1, "balanced": 2, "performance": 3}
+    rev = {"quiet": 1, "balanced": 2, "performance": 3, "custom": 255}
     try:
         val = rev.get(name, 2)
         LEGION_POWERMODE.write_text(f"{val}\n")
