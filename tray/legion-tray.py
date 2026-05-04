@@ -132,6 +132,8 @@ _PROFILE_INFO = {
         "desc":   "54W · Max",
     },
 }
+_PROFILE_ALIASES = { "low-power": "quiet", "custom": "performance" }
+_PROFILE_INFO.update((k, _PROFILE_INFO[v]) for k, v in _PROFILE_ALIASES.items())
 
 def _get_profiles() -> list[str]:
     """Return actual profile sysfs names in correct order."""

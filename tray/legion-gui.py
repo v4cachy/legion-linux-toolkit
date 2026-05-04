@@ -792,34 +792,36 @@ PROFILES       = _detect_profiles()
 
 # UI labels — "low-power" is the sysfs name but user always sees "Quiet"
 PROFILE_LABELS = {
-    "low-power":            "Quiet",
     "quiet":                "Quiet",
     "balanced":             "Balanced",
     "balanced-performance": "Performance",
     "performance":          "Custom",
 }
+PROFILE_LABELS.update((k, PROFILE_LABELS[v]) for k, v in {"low-power": "quiet", "custom": "performance"}.items())
+
 PROFILE_ICONS = {
-    "low-power":            "🔵",
     "quiet":                "🔵",
     "balanced":             "⚪",
     "balanced-performance": "🔴",
     "performance":          "🩷",
 }
+PROFILE_ICONS.update((k, PROFILE_ICONS[v]) for k, v in {"low-power": "quiet", "custom": "performance"}.items())
+
 PROFILE_DESCS = {
-    "low-power":            "15W · Boost OFF · EPP: power",
     "quiet":                "15W · Boost OFF · EPP: power",
     "balanced":             "35W · Boost ON · EPP: balance_power",
     "balanced-performance": "Performance · 45W · EPP: balance_performance (Red LED)",
     "performance":          "Custom · EPP: balance_performance (Pink LED)",
 }
-# Colors match the physical LED indicator (fn+Q cycle)
+PROFILE_DESCS.update((k, PROFILE_DESCS[v]) for k, v in {"low-power": "quiet", "custom": "performance"}.items())
+
 PROFILE_COLORS = {
-    "low-power":            "#4a9eff",
     "quiet":                "#4a9eff",
     "balanced":             "#d0d0d0",
     "balanced-performance": "#ff4757",
     "performance":          "#ff69b4",
 }
+PROFILE_COLORS.update((k, PROFILE_COLORS[v]) for k, v in {"low-power": "quiet", "custom": "performance"}.items())
 
 EPP_VALUES = ["default","performance","balance_performance","balance_power","power"]
 EPP_LABELS = {"default":"Default","performance":"Performance",

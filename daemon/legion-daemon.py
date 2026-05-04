@@ -176,6 +176,13 @@ PROFILES = {
     },
 }
 
+# Firmware aliases — maps non-standard names to standard profile keys
+_PROFILE_ALIASES = {
+    "low-power": "quiet",
+    "custom":    "performance",
+}
+PROFILES.update((k, PROFILES[v]) for k, v in _PROFILE_ALIASES.items())
+
 # ── Helpers ────────────────────────────────────────────────────────────────────
 def write(path: Path, value: str, label: str) -> bool:
     try:
@@ -494,17 +501,19 @@ def _get_user_session() -> tuple[str, str, str] | None:
 
 def _notify(profile: str):
     icons = {
-        "quiet":               "audio-volume-muted",
-        "balanced":            "battery-good",
-        "balanced-performance":"battery-full-charged",
-        "performance":         "utilities-system-monitor",
+        "quiet": "audio-volume-muted",
+        "balanced": "battery-good",
+        "balanced-performance": "battery-full-charged",
+        "performance": "utilities-system-monitor",
     }
     labels = {
-        "quiet":               "🔇 Quiet Mode  —  15W, boost off",
-        "balanced":            "⚖️ Balanced Mode  —  35W",
-        "balanced-performance":"⚡ Balanced-Performance  —  45W",
-        "performance":         "🚀 Performance Mode  —  54W",
+        "quiet": "🔇 Quiet Mode  —  15W, boost off",
+        "balanced": "⚖️ Balanced Mode  —  35W",
+        "balanced-performance": "⚡ Balanced-Performance  —  45W",
+        "performance": "🚀 Performance Mode  —  54W",
     }
+    icons.update((k, icons[v]) for k, v in _PROFILE_ALIASES.items())
+    labels.update((k, labels[v]) for k, v in _PROFILE_ALIASES.items())
     try:
         session = _get_user_session()
         if session is None:
@@ -538,23 +547,12 @@ def set_conservation_mode(enabled: bool):
 
 # ── Auto profile switching on AC/battery (LLL legiond feature) ─────────────────────
 AC_PROFILE_MAP = {
-    "performance": {
-        "ac": "performance",
-        "battery": "balanced-performance",
-    },
-    "balanced-performance": {
-        "ac": "balanced-performance",
-        "battery": "balanced",
-    },
-    "balanced": {
-        "ac": "balanced",
-        "battery": "quiet",
-    },
-    "quiet": {
-        "ac": "balanced",
-        "battery": "quiet",
-    },
+    "quiet":    { "ac": "balanced", "battery": "quiet" },
+    "balanced": { "ac": "balanced", "battery": "quiet" },
+    "balanced-performance": { "ac": "balanced-performance", "battery": "balanced" },
+    "performance": { "ac": "performance", "battery": "balanced-performance" },
 }
+AC_PROFILE_MAP.update((k, AC_PROFILE_MAP[v]) for k, v in _PROFILE_ALIASES.items())
 
 def get_effective_profile(requested: str = None, power_source: str = None) -> str:
     """
