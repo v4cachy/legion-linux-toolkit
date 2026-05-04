@@ -42,7 +42,7 @@ from PyQt6.QtGui import QColor, QPainter, QPen, QBrush, QFont, QCursor
 # PATHS
 # ══════════════════════════════════════════════════════════════════════════════
 PLATFORM_PROFILE  = Path("/sys/firmware/acpi/platform_profile")
-_POWERMODE_MAP = {1: "quiet", 2: "balanced", 3: "performance", 255: "custom", "low-power": "quiet"}
+_POWERMODE_MAP = {1: "quiet", 2: "balanced", 3: "performance", 255: "performance"}
 
 def _find_legion_powermode() -> Path:
     for pattern in ["pci*/*/*/PNP0C09:*", "pci*/*/*/VPC2004:*"]:
@@ -807,43 +807,31 @@ RGB_PRESETS = {
 
 # Detect actual profile names from the kernel (low-power vs quiet)
 def _detect_profiles():
-    """Return standard profiles (kernel 7.x platform_profile_choices is unreliable)."""
-    return ["low-power", "quiet", "balanced", "balanced-performance", "performance", "custom"]
+    return ["quiet", "balanced", "performance"]
 
 PROFILES       = _detect_profiles()
 
 # UI labels — "low-power" is the sysfs name but user always sees "Quiet"
 PROFILE_LABELS = {
-    "quiet":                "Quiet",
-    "balanced":             "Balanced",
-    "balanced-performance": "Performance",
-    "performance":          "Custom",
+    "quiet":       "Quiet",
+    "balanced":    "Balanced",
+    "performance": "Performance",
 }
-PROFILE_LABELS.update((k, PROFILE_LABELS[v]) for k, v in {"low-power": "quiet", "custom": "performance"}.items())
-
 PROFILE_ICONS = {
-    "quiet":                "🔵",
-    "balanced":             "⚪",
-    "balanced-performance": "🔴",
-    "performance":          "🩷",
+    "quiet":       "🔵",
+    "balanced":    "⚪",
+    "performance": "🔴",
 }
-PROFILE_ICONS.update((k, PROFILE_ICONS[v]) for k, v in {"low-power": "quiet", "custom": "performance"}.items())
-
 PROFILE_DESCS = {
-    "quiet":                "15W · Boost OFF · EPP: power",
-    "balanced":             "35W · Boost ON · EPP: balance_power",
-    "balanced-performance": "Performance · 45W · EPP: balance_performance (Red LED)",
-    "performance":          "Custom · EPP: balance_performance (Pink LED)",
+    "quiet":       "15W · Boost OFF",
+    "balanced":    "35W · Boost ON",
+    "performance": "54W · Boost ON",
 }
-PROFILE_DESCS.update((k, PROFILE_DESCS[v]) for k, v in {"low-power": "quiet", "custom": "performance"}.items())
-
 PROFILE_COLORS = {
-    "quiet":                "#4a9eff",
-    "balanced":             "#d0d0d0",
-    "balanced-performance": "#ff4757",
-    "performance":          "#ff69b4",
+    "quiet":       "#4a9eff",
+    "balanced":    "#d0d0d0",
+    "performance": "#ff4757",
 }
-PROFILE_COLORS.update((k, PROFILE_COLORS[v]) for k, v in {"low-power": "quiet", "custom": "performance"}.items())
 
 EPP_VALUES = ["default","performance","balance_performance","balance_power","power"]
 EPP_LABELS = {"default":"Default","performance":"Performance",
@@ -967,7 +955,7 @@ def apply_profile(name: str):
     except Exception as e:
         pass
     # Fallback: write powermode directly
-    rev = {"quiet": 1, "low-power": 1, "balanced": 2, "performance": 3, "custom": 255}
+    rev = {"quiet": 1, "balanced": 2, "performance": 3}
     try:
         val = rev.get(name, 2)
         LEGION_POWERMODE.write_text(f"{val}\n")

@@ -56,10 +56,8 @@ PLATFORM_PROFILE_CHOICES= Path("/sys/firmware/acpi/platform_profile_choices")
 
 # LLL (LenovoLegionLinux) powermode — direct read from BIOS/EC via LLL driver
 # 1=quiet, 2=balanced, 3=performance, 255=custom
-_POWERMODE_MAP = {1: "quiet", 2: "balanced", 3: "performance", 255: "custom",
-                  "low-power": "quiet"}  # alias fallback
-_POWERMODE_MAP_REV = {"quiet": 1, "low-power": 1, "balanced": 2,
-                      "performance": 3, "custom": 255}
+_POWERMODE_MAP = {1: "quiet", 2: "balanced", 3: "performance", 255: "performance"}
+_POWERMODE_MAP_REV = {"quiet": 1, "balanced": 2, "performance": 3}
 
 def _find_legion_powermode() -> Path:
     """Find the LLL powermode sysfs file dynamically."""
@@ -183,52 +181,35 @@ def find_hwmon(name: str) -> Path | None:
 
 
 # ── Profile definitions ────────────────────────────────────────────────────────
-# Values tuned for Ryzen 7 5800H (cTDP range: 35W–54W, base 45W)
 PROFILES = {
     "quiet": {
         "governor":     "powersave",
-        "boost":        "0",           # AMD boost OFF — confirmed from Windows LLT
-        "epp":          "power",       # lowest power draw
-        "rapl_pl1_uw":  15_000_000,    # 15W sustained
-        "rapl_pl2_uw":  20_000_000,    # 20W burst
-        "fan_mode":     "0",           # auto
+        "boost":        "0",
+        "epp":          "power",
+        "rapl_pl1_uw":  15_000_000,
+        "rapl_pl2_uw":  20_000_000,
+        "fan_mode":     "0",
         "description":  "Quiet — silent, 15W, boost off",
     },
     "balanced": {
-        "governor":     "powersave",   # powersave + boost=on = schedutil equivalent on AMD
+        "governor":     "powersave",
         "boost":        "1",
-        "epp":          "balance_power",  # balanced EPP — NOT balance_performance
-        "rapl_pl1_uw":  35_000_000,    # 35W sustained
-        "rapl_pl2_uw":  54_000_000,    # 54W burst (5800H max cTDP)
-        "fan_mode":     "0",           # auto
-        "description":  "Balanced — 35W, boost on, auto fan",
-    },
-    "balanced-performance": {
-        "governor":     "performance",
-        "boost":        "1",
-        "epp":          "performance",      # red LED = full Performance mode
-        "rapl_pl1_uw":  45_000_000,
+        "epp":          "balance_power",
+        "rapl_pl1_uw":  35_000_000,
         "rapl_pl2_uw":  54_000_000,
         "fan_mode":     "0",
-        "description":  "Performance (Red LED) — 45W, boost on",
+        "description":  "Balanced — 35W, boost on, auto fan",
     },
     "performance": {
         "governor":     "performance",
         "boost":        "1",
-        "epp":          "balance_performance",  # pink LED = Custom mode
+        "epp":          "performance",
         "rapl_pl1_uw":  54_000_000,
         "rapl_pl2_uw":  54_000_000,
         "fan_mode":     "0",
-        "description":  "Custom (Pink LED) — 54W, boost on",
+        "description":  "Performance — 54W, boost on",
     },
 }
-
-# Firmware aliases — maps non-standard names to standard profile keys
-_PROFILE_ALIASES = {
-    "low-power": "quiet",
-    "custom":    "performance",
-}
-PROFILES.update((k, PROFILES[v]) for k, v in _PROFILE_ALIASES.items())
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 def write(path: Path, value: str, label: str) -> bool:
@@ -287,8 +268,7 @@ def get_current_profile() -> str:
 
 
 def get_available_profiles() -> list[str]:
-    """Return standard profiles (kernel 7.x platform_profile_choices is unreliable)."""
-    return ["quiet", "balanced", "balanced-performance", "performance", "low-power", "custom"]
+    return ["quiet", "balanced", "performance"]
 
 
 # ── Apply a profile ────────────────────────────────────────────────────────────
@@ -549,17 +529,13 @@ def _notify(profile: str):
     icons = {
         "quiet": "audio-volume-muted",
         "balanced": "battery-good",
-        "balanced-performance": "battery-full-charged",
         "performance": "utilities-system-monitor",
     }
     labels = {
         "quiet": "🔇 Quiet Mode  —  15W, boost off",
         "balanced": "⚖️ Balanced Mode  —  35W",
-        "balanced-performance": "⚡ Balanced-Performance  —  45W",
         "performance": "🚀 Performance Mode  —  54W",
     }
-    icons.update((k, icons[v]) for k, v in _PROFILE_ALIASES.items())
-    labels.update((k, labels[v]) for k, v in _PROFILE_ALIASES.items())
     try:
         session = _get_user_session()
         if session is None:
@@ -593,12 +569,10 @@ def set_conservation_mode(enabled: bool):
 
 # ── Auto profile switching on AC/battery (LLL legiond feature) ─────────────────────
 AC_PROFILE_MAP = {
-    "quiet":    { "ac": "balanced", "battery": "quiet" },
-    "balanced": { "ac": "balanced", "battery": "quiet" },
-    "balanced-performance": { "ac": "balanced-performance", "battery": "balanced" },
-    "performance": { "ac": "performance", "battery": "balanced-performance" },
+    "quiet":       { "ac": "balanced", "battery": "quiet" },
+    "balanced":    { "ac": "balanced", "battery": "quiet" },
+    "performance": { "ac": "performance", "battery": "balanced" },
 }
-AC_PROFILE_MAP.update((k, AC_PROFILE_MAP[v]) for k, v in _PROFILE_ALIASES.items())
 
 def get_effective_profile(requested: str = None, power_source: str = None) -> str:
     """

@@ -35,7 +35,7 @@ except ImportError:
 DAEMON_SOCKET     = "/run/legion-toolkit.sock"
 GUI_BIN           = Path("/usr/lib/legion-toolkit/legion-gui.py")
 IDEAPAD_BASE      = Path("/sys/bus/platform/drivers/ideapad_acpi/VPC2004:00")
-_POWERMODE_MAP = {1: "quiet", 2: "balanced", 3: "performance", 255: "custom"}
+_POWERMODE_MAP = {1: "quiet", 2: "balanced", 3: "performance", 255: "performance"}
 
 def _find_legion_base() -> Path:
     for pattern in ["pci*/*/*/PNP0C09:*", "pci*/*/*/VPC2004:*"]:
@@ -127,7 +127,7 @@ def _make_legion_tray_icon(profile: str) -> QIcon:
 # ── Profile definitions (UI names — "low-power" never shown to user) ──────────
 # Internal sysfs name → display info
 _PROFILE_INFO = {
-    "low-power": {
+    "quiet": {
         "label":  "Quiet",
         "icon":   "🔵",
         "color":  "#4a9eff",
@@ -141,27 +141,17 @@ _PROFILE_INFO = {
         "letter": "B",
         "desc":   "35W · Everyday",
     },
-    "balanced-performance": {
+    "performance": {
         "label":  "Performance",
         "icon":   "🔴",
         "color":  "#ff4757",
         "letter": "P",
-        "desc":   "45W · Gaming",
-    },
-    "performance": {
-        "label":  "Custom",
-        "icon":   "🩷",
-        "color":  "#ff69b4",
-        "letter": "C",
-        "desc":   "54W · Max",
+        "desc":   "54W · Gaming",
     },
 }
-_PROFILE_ALIASES = { "low-power": "quiet", "custom": "performance" }
-_PROFILE_INFO.update((k, _PROFILE_INFO[v]) for k, v in _PROFILE_ALIASES.items())
 
 def _get_profiles() -> list[str]:
-    """Return standard profiles (kernel 7.x platform_profile_choices is unreliable)."""
-    return ["low-power", "quiet", "balanced", "balanced-performance", "performance", "custom"]
+    return ["quiet", "balanced", "performance"]
 
 def _label(sysfs_name: str) -> str:
     return _PROFILE_INFO.get(sysfs_name, {}).get("label", sysfs_name.title())
@@ -211,7 +201,7 @@ def _apply_profile(sysfs_name: str):
     if resp == "ok":
         return
     # fallback — write powermode directly
-    rev = {"quiet": 1, "low-power": 1, "balanced": 2, "performance": 3, "custom": 255}
+    rev = {"quiet": 1, "balanced": 2, "performance": 3}
     try:
         val = rev.get(sysfs_name, 2)
         LEGION_POWERMODE.write_text(f"{val}\n")
