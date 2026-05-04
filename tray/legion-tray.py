@@ -339,7 +339,7 @@ class LegionTray:
         if NVIDIA_BACKLIGHT.exists():
             bl_val = rd(NVIDIA_BACKLIGHT)
             self._bl_action = QAction(
-                ("💡  Brightness Backlight  ●" if bl_val == "1" else "💡  Brightness Backlight  ○"), m)
+                ("💡  Brightness Backlight  ●" if int(bl_val) > 0 else "💡  Brightness Backlight  ○"), m)
             self._bl_action.triggered.connect(self._toggle_backlight)
             m.addAction(self._bl_action)
             m.addSeparator()
@@ -494,9 +494,13 @@ class LegionTray:
                   "G-Sync ON", "G-Sync OFF")
 
     def _toggle_backlight(self):
-        self._tog(NVIDIA_BACKLIGHT, self._bl_action,
-                  "💡  Brightness Backlight  ●", "💡  Brightness Backlight  ○",
-                  "Backlight ON", "Backlight OFF")
+        cur = int(rd(NVIDIA_BACKLIGHT, "0"))
+        mx_path = Path("/sys/class/backlight/nvidia_wmi_ec_backlight/max_brightness")
+        mx = int(rd(mx_path, "800"))
+        new_val = "0" if cur > 0 else str(mx)
+        _write(NVIDIA_BACKLIGHT, new_val)
+        self._bl_action.setText(
+            ("💡  Brightness Backlight  ●" if new_val != "0" else "💡  Brightness Backlight  ○"))
 
     def _toggle_fn(self):
         self._tog(FN_LOCK, self._fn_action,

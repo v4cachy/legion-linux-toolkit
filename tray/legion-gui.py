@@ -3999,11 +3999,15 @@ class DisplayPage(QWidget):
 
         # Brightness Backlight
         if NVIDIA_BACKLIGHT.exists():
+            def _is_bl_on():
+                try: return int(NVIDIA_BACKLIGHT.read_text().strip()) > 0
+                except: return False
             _bl_nt = NotifyToggle(
                 "Brightness Backlight",
                 "Control display backlight via nvidia_wmi_ec_backlight.",
                 NVIDIA_BACKLIGHT,
-                notif_title="Brightness Backlight")
+                notif_title="Brightness Backlight",
+                read_val=lambda: "1" if _is_bl_on() else "0")
             dl.addWidget(_bl_nt)
         root.addWidget(dc)
 
