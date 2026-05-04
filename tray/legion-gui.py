@@ -42,6 +42,32 @@ from PyQt6.QtGui import QColor, QPainter, QPen, QBrush, QFont, QCursor
 # PATHS
 # ══════════════════════════════════════════════════════════════════════════════
 PLATFORM_PROFILE  = Path("/sys/firmware/acpi/platform_profile")
+_POWERMODE_MAP = {1: "quiet", 2: "balanced", 3: "performance", 255: "custom", "low-power": "quiet"}
+
+def _find_legion_powermode() -> Path:
+    for pattern in ["pci*/*/*/PNP0C09:*", "pci*/*/*/VPC2004:*"]:
+        try:
+            for p in Path("/sys/devices").glob(pattern):
+                f = p / "powermode"
+                if f.exists(): return f
+        except: pass
+    for base in [Path("/sys/bus/platform/drivers/legion"),
+                 Path("/sys/module/legion_laptop/drivers/platform:legion")]:
+        if base.exists():
+            try:
+                for d in base.iterdir():
+                    f = d / "powermode"
+                    if f.exists(): return f
+            except: pass
+    return Path("/tmp/nonexistent_powermode")
+
+LEGION_POWERMODE = _find_legion_powermode()
+
+def _read_powermode() -> str:
+    try:
+        return _POWERMODE_MAP.get(int(LEGION_POWERMODE.read_text().strip()), "balanced")
+    except:
+        return "balanced"
 AMD_BOOST         = Path("/sys/devices/system/cpu/cpufreq/boost")
 DAEMON_BIN        = Path("/usr/lib/legion-toolkit/legion-daemon.py")
 
@@ -781,12 +807,8 @@ RGB_PRESETS = {
 
 # Detect actual profile names from the kernel (low-power vs quiet)
 def _detect_profiles():
-    try:
-        choices = Path("/sys/firmware/acpi/platform_profile_choices").read_text().strip().split()
-        order = ["low-power","quiet","balanced","balanced-performance","performance"]
-        return [p for p in order if p in choices]
-    except:
-        return ["low-power","balanced","balanced-performance","performance"]
+    """Return standard profiles (kernel 7.x platform_profile_choices is unreliable)."""
+    return ["low-power", "quiet", "balanced", "balanced-performance", "performance", "custom"]
 
 PROFILES       = _detect_profiles()
 
@@ -944,25 +966,11 @@ def apply_profile(name: str):
             return True, f"Profile set to {name}"
     except Exception as e:
         pass
-    # Fallback: pkexec direct write
-    # Resolve alias: "quiet" → "low-power" for this machine's firmware
-    fw = name
+    # Fallback: write powermode directly
+    rev = {"quiet": 1, "low-power": 1, "balanced": 2, "performance": 3, "custom": 255}
     try:
-        choices = Path("/sys/firmware/acpi/platform_profile_choices").read_text().strip().split()
-        if name not in choices:
-            aliases = {"quiet": "low-power"}
-            fw = aliases.get(name, name)
-            if fw not in choices:
-                for c2 in choices:
-                    if name in c2 or c2 in name:
-                        fw = c2; break
-    except Exception:
-        pass
-    try:
-        subprocess.Popen(
-            ["pkexec","sh","-c",f"echo {fw} > /sys/firmware/acpi/platform_profile"],
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-        )
+        val = rev.get(name, 2)
+        LEGION_POWERMODE.write_text(f"{val}\n")
         return True, f"Profile set to {name}"
     except Exception as e:
         return False, str(e)
@@ -2261,7 +2269,7 @@ def apply_actions_now():
         if not cfg.get("auto_switch"): return
         ac = get_ac_connected()
         target = cfg["on_ac"] if ac else cfg["on_battery"]
-        current = rdsys(PLATFORM_PROFILE, "balanced")
+        current = _read_powermode()
         if target != current:
             apply_profile(target)
             send_notif("Auto Profile",
@@ -2350,7 +2358,7 @@ class DataSampler(QThread):
                 # Always sample — these are cheap reads
                 util          = self._read_cpu_util()
                 ac            = get_ac_connected()
-                profile       = rdsys(PLATFORM_PROFILE,"balanced")
+                profile       = _read_powermode()
 
                 # Medium cost — every tick
                 freq          = get_cpu_freq_ghz()
@@ -3266,7 +3274,7 @@ class HomePage(QWidget):
             return c
 
         # Power Mode dropdown
-        cur_profile  = rdsys(PLATFORM_PROFILE, "balanced")
+        cur_profile  = _read_powermode()
         profile_opts = [(PROFILE_LABELS.get(p,p), p) for p in PROFILES]
         cur_idx      = next((i for i,(_,p) in enumerate(profile_opts) if p == cur_profile), 0)
         self.power_combo = _combo(profile_opts, cur_idx)
@@ -6157,7 +6165,7 @@ class ActionsPage(QWidget):
             profile = d.get("profile", "balanced")
         else:
             ac      = get_ac_connected()
-            profile = rdsys(PLATFORM_PROFILE, "balanced")
+            profile = _read_powermode()
         self.ac_status.set_value("AC Adapter" if ac else "Battery")
         self.prof_status.set_value(PROFILE_LABELS.get(profile, "—"))
         self.auto_status.set_value(
@@ -6340,7 +6348,7 @@ class LegionDashboard(QMainWindow):
         # Hidden badge kept for _refresh_badge compat — not shown
         self.badge = QLabel(""); self.badge.hide()
         self.ac_ind = QLabel(""); self.ac_ind.hide()
-        self._refresh_badge(rdsys(PLATFORM_PROFILE,"balanced"))
+        self._refresh_badge(_read_powermode())
         right.addWidget(topbar)
 
         self.stack = QStackedWidget()

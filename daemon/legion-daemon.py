@@ -54,6 +54,53 @@ def _check_rapl(verbose: bool = False) -> bool:
 PLATFORM_PROFILE        = Path("/sys/firmware/acpi/platform_profile")
 PLATFORM_PROFILE_CHOICES= Path("/sys/firmware/acpi/platform_profile_choices")
 
+# LLL (LenovoLegionLinux) powermode — direct read from BIOS/EC via LLL driver
+# 1=quiet, 2=balanced, 3=performance, 255=custom
+_POWERMODE_MAP = {1: "quiet", 2: "balanced", 3: "performance", 255: "custom",
+                  "low-power": "quiet"}  # alias fallback
+_POWERMODE_MAP_REV = {"quiet": 1, "low-power": 1, "balanced": 2,
+                      "performance": 3, "custom": 255}
+
+def _find_legion_powermode() -> Path:
+    """Find the LLL powermode sysfs file dynamically."""
+    try:
+        for p in Path("/sys/devices").glob("pci*/*/*/PNP0C09:*"):
+            f = p / "powermode"
+            if f.exists(): return f
+    except: pass
+    try:
+        for p in Path("/sys/devices").glob("pci*/*/*/VPC2004:*"):
+            f = p / "powermode"
+            if f.exists(): return f
+    except: pass
+    for base in [Path("/sys/bus/platform/drivers/legion"),
+                 Path("/sys/module/legion_laptop/drivers/platform:legion")]:
+        if base.exists():
+            try:
+                for d in base.iterdir():
+                    f = d / "powermode"
+                    if f.exists(): return f
+            except: pass
+    return Path("/tmp/nonexistent_powermode")
+
+LEGION_POWERMODE = _find_legion_powermode()
+
+def _read_lll_powermode() -> str:
+    """Read power mode directly from LLL driver (reliable on kernel 7.x)."""
+    try:
+        val = int(LEGION_POWERMODE.read_text().strip())
+        return _POWERMODE_MAP.get(val, "balanced")
+    except:
+        return "balanced"
+
+def _write_lll_powermode(profile: str):
+    """Write power mode directly to LLL driver."""
+    val = _POWERMODE_MAP_REV.get(profile, 2)
+    try:
+        LEGION_POWERMODE.write_text(f"{val}\n")
+    except Exception:
+        pass
+
 # ── Power source detection (AC/battery) ───────────────────────────────────────────
 def is_ac_connected() -> bool:
     """Check if AC power is connected."""
@@ -235,17 +282,13 @@ def restore_max_freq():
 
 
 def get_current_profile() -> str:
-    try:
-        return PLATFORM_PROFILE.read_text().strip()
-    except Exception:
-        return "unknown"
+    """Read profile from LLL powermode (reliable on kernel 7.x)."""
+    return _read_lll_powermode()
 
 
 def get_available_profiles() -> list[str]:
-    try:
-        return PLATFORM_PROFILE_CHOICES.read_text().strip().split()
-    except Exception:
-        return list(PROFILES.keys())
+    """Return standard profiles (kernel 7.x platform_profile_choices is unreliable)."""
+    return ["quiet", "balanced", "balanced-performance", "performance", "low-power", "custom"]
 
 
 # ── Apply a profile ────────────────────────────────────────────────────────────
@@ -261,10 +304,10 @@ def apply_profile(profile_name: str):
     log.info(f"   {p['description']}")
     log.info(f"")
 
-    # Platform profile is now handled by LLL's legiond - don't overwrite
-    # write(PLATFORM_PROFILE, profile_name, "platform_profile")
+    # Write powermode directly to LLL driver (kernel 7.x platform_profile is broken)
+    _write_lll_powermode(profile_name)
 
-    # 2. Restore CPU max freq first (clears any previous cap)
+    # Restore CPU max freq first (clears any previous cap)
     restore_max_freq()
 
     # 3. CPU governor (AMD: performance or powersave only)
@@ -441,7 +484,10 @@ class ProfileWatcher:
                 if len(parts) == 2:
                     path, value = parts[0].strip(), parts[1].strip()
                     try:
-                        Path(path).write_text(value + "\n")
+                        if path == str(LEGION_POWERMODE):
+                            _write_lll_powermode(value)
+                        else:
+                            Path(path).write_text(value + "\n")
                         conn.send(b"ok\n")
                     except Exception as e:
                         conn.send(f"err:{e}\n".encode())

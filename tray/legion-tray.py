@@ -34,9 +34,9 @@ except ImportError:
 # ── Paths ──────────────────────────────────────────────────────────────────────
 DAEMON_SOCKET     = "/run/legion-toolkit.sock"
 GUI_BIN           = Path("/usr/lib/legion-toolkit/legion-gui.py")
-PLATFORM_PROFILE  = Path("/sys/firmware/acpi/platform_profile")
-PLATFORM_CHOICES  = Path("/sys/firmware/acpi/platform_profile_choices")
 IDEAPAD_BASE      = Path("/sys/bus/platform/drivers/ideapad_acpi/VPC2004:00")
+_POWERMODE_MAP = {1: "quiet", 2: "balanced", 3: "performance", 255: "custom"}
+
 def _find_legion_base() -> Path:
     for pattern in ["pci*/*/*/PNP0C09:*", "pci*/*/*/VPC2004:*"]:
         try:
@@ -46,7 +46,31 @@ def _find_legion_base() -> Path:
         except: pass
     return Path("/sys/devices/pci0000:00/0000:00:14.3/PNP0C09:00")
 
+def _find_legion_powermode() -> Path:
+    for pattern in ["pci*/*/*/PNP0C09:*", "pci*/*/*/VPC2004:*"]:
+        try:
+            for p in Path("/sys/devices").glob(pattern):
+                f = p / "powermode"
+                if f.exists(): return f
+        except: pass
+    for base in [Path("/sys/bus/platform/drivers/legion"),
+                 Path("/sys/module/legion_laptop/drivers/platform:legion")]:
+        if base.exists():
+            try:
+                for d in base.iterdir():
+                    f = d / "powermode"
+                    if f.exists(): return f
+            except: pass
+    return Path("/tmp/nonexistent_powermode")
+
+LEGION_POWERMODE  = _find_legion_powermode()
 LEGION_BASE       = _find_legion_base()
+
+def _read_powermode() -> str:
+    try:
+        return _POWERMODE_MAP.get(int(LEGION_POWERMODE.read_text().strip()), "balanced")
+    except:
+        return "balanced"
 AMD_BOOST         = Path("/sys/devices/system/cpu/cpufreq/boost")
 BAT               = Path("/sys/class/power_supply/BAT0")
 
@@ -136,14 +160,8 @@ _PROFILE_ALIASES = { "low-power": "quiet", "custom": "performance" }
 _PROFILE_INFO.update((k, _PROFILE_INFO[v]) for k, v in _PROFILE_ALIASES.items())
 
 def _get_profiles() -> list[str]:
-    """Return actual profile sysfs names in correct order."""
-    try:
-        raw = PLATFORM_CHOICES.read_text().strip().split()
-        order = ["low-power", "quiet", "balanced", "balanced-performance", "performance"]
-        result = [p for p in order if p in raw]
-        return result if result else raw
-    except Exception:
-        return list(_PROFILE_INFO.keys())
+    """Return standard profiles (kernel 7.x platform_profile_choices is unreliable)."""
+    return ["low-power", "quiet", "balanced", "balanced-performance", "performance", "custom"]
 
 def _label(sysfs_name: str) -> str:
     return _PROFILE_INFO.get(sysfs_name, {}).get("label", sysfs_name.title())
@@ -188,17 +206,15 @@ def _write(path: Path, value: str):
         pass
 
 def _apply_profile(sysfs_name: str):
-    """Apply profile via daemon socket. Falls back to pkexec."""
+    """Apply profile via daemon socket. Falls back to direct powermode write."""
     resp = _send_socket(f"set:{sysfs_name}")
     if resp == "ok":
         return
-    # fallback
+    # fallback — write powermode directly
+    rev = {"quiet": 1, "low-power": 1, "balanced": 2, "performance": 3, "custom": 255}
     try:
-        subprocess.Popen(
-            ["pkexec", "sh", "-c",
-             f"echo {sysfs_name} > /sys/firmware/acpi/platform_profile"],
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-        )
+        val = rev.get(sysfs_name, 2)
+        LEGION_POWERMODE.write_text(f"{val}\n")
     except Exception:
         pass
 
@@ -226,7 +242,7 @@ class LegionTray:
     def __init__(self, app: QApplication):
         self.app      = app
         self._profiles = _get_profiles()
-        self._profile  = rd(PLATFORM_PROFILE, "balanced")
+        self._profile  = _read_powermode()
 
         self.tray = QSystemTrayIcon()
         self.tray.setIcon(_make_legion_tray_icon(self._profile))
@@ -525,7 +541,7 @@ class LegionTray:
 
     # ── Poll Fn+Q and battery ─────────────────────────────────────────────────
     def _poll(self):
-        current = rd(PLATFORM_PROFILE, self._profile)
+        current = _read_powermode()
         if current != self._profile:
             self._update_ui(current)
             # Rebuild menu to refresh all toggle states
