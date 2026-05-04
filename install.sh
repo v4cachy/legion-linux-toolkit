@@ -141,17 +141,15 @@ install -m 644 "$SCRIPT_DIR/tray/org.legion-toolkit.policy" \
     /usr/share/polkit-1/actions/org.legion-toolkit.policy
 ok "GUI and tray installed"
 
-TRAY_EXEC="/usr/lib/legion-toolkit/legion-tray.py"
-
 # Get the real user (not root)
 REAL_USER="${SUDO_USER:-$(logname 2>/dev/null || echo "orb")}"
 
-# Create autostart that runs as user
-cat > /etc/xdg/autostart/legion-toolkit.desktop << EOF
+# Create autostart that runs as user directly
+cat > /etc/xdg/autostart/legion-toolkit.desktop << 'EOF'
 [Desktop Entry]
 Type=Application
 Name=Legion Linux Toolkit
-Exec=sudo -u $REAL_USER XDG_RUNTIME_DIR=/run/user/$(id -u $REAL_USER) WAYLAND_DISPLAY=wayland-0 QT_QPA_PLATFORM=wayland $TRAY_EXEC
+Exec=/usr/lib/legion-toolkit/legion-tray.py
 Icon=computer
 Terminal=false
 Categories=System;

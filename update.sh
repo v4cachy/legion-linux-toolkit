@@ -114,13 +114,12 @@ if [[ -f "$SCRIPT_DIR/udev/99-legion-toolkit.rules" ]]; then
     ok "udev rules reloaded"
 fi
 
-# Autostart desktop entry
-TRAY_EXEC="/usr/lib/legion-toolkit/legion-tray.py"
-cat > /etc/xdg/autostart/legion-toolkit.desktop << EOF
+# Autostart desktop entry — runs as user directly, no sudo
+cat > /etc/xdg/autostart/legion-toolkit.desktop << 'EOF'
 [Desktop Entry]
 Type=Application
 Name=Legion Linux Toolkit
-Exec=$TRAY_EXEC
+Exec=/usr/lib/legion-toolkit/legion-tray.py
 Icon=computer
 Terminal=false
 Categories=System;

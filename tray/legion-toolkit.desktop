@@ -1,12 +1,8 @@
-#!/usr/bin/env xdg-open
 [Desktop Entry]
 Type=Application
-Name=Legion Toolkit
-Comment=Lenovo Legion power management tray
+Name=Legion Linux Toolkit
 Exec=/usr/lib/legion-toolkit/legion-tray.py
-Icon=battery-good
-Categories=System;HardwareSettings;
-Keywords=legion;power;thermal;lenovo;
-StartupNotify=false
-# Autostart on KDE Plasma login
-X-KDE-autostart-condition=legion-toolkit
+Icon=computer
+Terminal=false
+Categories=System;
+X-GNOME-Autostart-enabled=true

@@ -2964,9 +2964,8 @@ def _mk_lineedit(text: str = "", width: int = 100, placeholder: str = "") -> "QL
     le.setPlaceholderText(placeholder)
     le.setFixedWidth(width)
     le.setStyleSheet(
-        f"QLineEdit{{background:{C_CARD2};color:{C_TEXT};border:1px solid {C_BORDER};"
-        f"border-radius:5px;padding:4px 8px;font-size:12px;font-family:monospace;}}"
-        f"QLineEdit:focus{{border:1px solid {C_ACCENT};}}"
+        f"QLineEdit{{background:{C_CARD2};color:{C_TEXT};border:none;"
+        f"border-radius:8px;padding:8px 12px;font-size:13px;selection-background-color:{C_ACCENT};}}"
     )
     return le
 
@@ -2976,7 +2975,7 @@ def make_div():
 
 def make_card(title=""):
     card = QWidget()
-    card.setStyleSheet(f"background:{C_CARD};border-radius:12px;border:1px solid {C_BORDER};")
+    card.setStyleSheet(f"background:{C_CARD};border-radius:12px;")
     card.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
     lay = QVBoxLayout(card); lay.setContentsMargins(20,16,20,16); lay.setSpacing(12)
     if title:
@@ -2991,11 +2990,11 @@ def sec_title(text):
     return l
 
 def combo_style():
-    return (f"QComboBox{{background:{C_CARD2};color:{C_TEXT};border:1px solid {C_BORDER};"
+    return (f"QComboBox{{background:{C_CARD2};color:{C_TEXT};border:none;"
             f"border-radius:8px;padding:8px 14px;font-size:13px;min-width:180px;}}"
             f"QComboBox::drop-down{{border:none;width:24px;}}"
             f"QComboBox QAbstractItemView{{background:{C_CARD2};color:{C_TEXT};"
-            f"border:1px solid {C_BORDER};selection-background-color:{C_ACCENT};selection-color:#fff;"
+            f"border:none;selection-background-color:{C_ACCENT};selection-color:#fff;"
             f"padding:4px;}}")
 
 
@@ -3006,7 +3005,7 @@ class StatusBadge(QWidget):
         self.setFixedHeight(60)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.setStyleSheet(
-            f"QWidget{{background:{C_CARD2};border-radius:10px;border:1px solid {C_BORDER};}}"
+            f"QWidget{{background:{C_CARD2};border-radius:10px;}}"
         )
         lay = QVBoxLayout(self); lay.setContentsMargins(10,8,10,8); lay.setSpacing(2)
         self._t = QLabel(title)
@@ -3086,15 +3085,15 @@ class ProfileBtn(QPushButton):
         self.setStyleSheet(
             f"QPushButton{{"
             f"  background:{C_CARD2};color:{C_TEXT2};"
-            f"  border:1px solid {C_BORDER};border-radius:10px;"
+            f"  border:none;border-radius:10px;"
             f"  font-size:12px;text-align:center;padding:4px 2px;"
             f"}}"
             f"QPushButton:checked{{"
             f"  background:rgba({int(color[1:3],16)},{int(color[3:5],16)},{int(color[5:7],16)},30);"
-            f"  color:{color};border:2px solid {color};border-radius:10px;"
+            f"  color:{color};border:none;border-radius:10px;"
             f"}}"
             f"QPushButton:hover:!checked{{"
-            f"  border:1px solid #555;color:{C_TEXT};"
+            f"  background:{C_HOVER};color:{C_TEXT};"
             f"}}"
         )
         # Layout inside button: icon on top, label below, watt hint at bottom
@@ -3196,7 +3195,7 @@ class HomePage(QWidget):
         scroll.setWidget(inner)
 
         # ── Hardware Monitor Card ─────────────────────────────────────────
-        hw = QWidget(); hw.setStyleSheet(f"background:{C_CARD};border-radius:12px;border:1px solid {C_BORDER};")
+        hw = QWidget(); hw.setStyleSheet(f"background:{C_CARD};border-radius:12px;")
         hw.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
         hw_outer = QHBoxLayout(hw); hw_outer.setContentsMargins(0,0,0,0); hw_outer.setSpacing(0)
 
@@ -3243,7 +3242,7 @@ class HomePage(QWidget):
         self.gpu_pstate_lbl = QLabel("P-State: —")
         self.gpu_pstate_lbl.setStyleSheet(
             f"color:{C_BLUE};font-size:12px;background:transparent;"
-            f"border:1px solid {C_BORDER};border-radius:4px;padding:2px 6px;"
+            f"border:none;border-radius:4px;padding:2px 6px;"
         )
         self.gpu_pstate_lbl.setToolTip("GPU Performance State\nP0=Max  P2=Mid  P8=Idle")
         gpu_l.addWidget(col_hdr("GPU", self.gpu_pstate_lbl))
@@ -6404,13 +6403,13 @@ class LegionDashboard(QMainWindow):
 
         # Sidebar — wider, LLT-style
         sb = QWidget(); sb.setFixedWidth(220)
-        sb.setStyleSheet(f"background:{C_SIDEBAR};border-right:1px solid {C_BORDER};")
+        sb.setStyleSheet(f"background:{C_SIDEBAR};")
         sbl = QVBoxLayout(sb); sbl.setContentsMargins(0,0,0,0); sbl.setSpacing(0)
 
         # Top bar with logo and title
         top_logo = QWidget()
         top_logo.setFixedHeight(64)
-        top_logo.setStyleSheet(f"background:{C_SIDEBAR};border-bottom:1px solid {C_BORDER};")
+        top_logo.setStyleSheet(f"background:{C_SIDEBAR};")
         top_logo_lay = QHBoxLayout(top_logo)
         top_logo_lay.setContentsMargins(16,10,16,10)
         top_logo_lay.setSpacing(10)
@@ -6453,7 +6452,7 @@ class LegionDashboard(QMainWindow):
 
         # Bottom section with theme toggle
         bottom_area = QWidget()
-        bottom_area.setStyleSheet(f"background:{C_SIDEBAR};border-top:1px solid {C_BORDER};")
+        bottom_area.setStyleSheet(f"background:{C_SIDEBAR};")
         bottom_lay = QVBoxLayout(bottom_area)
         bottom_lay.setContentsMargins(8,8,8,8)
         bottom_lay.setSpacing(4)
@@ -6466,7 +6465,6 @@ class LegionDashboard(QMainWindow):
         topbar = QWidget(); topbar.setFixedHeight(60)
         topbar.setStyleSheet(
             f"background:{C_BG};"
-            f"border-bottom:1px solid {C_BORDER};"
         )
         tbl = QHBoxLayout(topbar); tbl.setContentsMargins(28,0,28,0); tbl.setSpacing(12)
 
