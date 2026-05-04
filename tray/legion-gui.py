@@ -32,7 +32,7 @@ from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QPushButton, QFrame, QScrollArea, QSizePolicy,
     QSlider, QStackedWidget, QComboBox, QToolTip, QSpinBox,
-    QDoubleSpinBox, QGridLayout, QLineEdit
+    QDoubleSpinBox, QLineEdit
 )
 from PyQt6.QtCore import (Qt, QTimer, QPropertyAnimation, QEasingCurve,
                            pyqtProperty, QThread, pyqtSignal, QPoint)
@@ -2604,7 +2604,7 @@ class FirstRunWizard(QDialog):
         logo_row.addWidget(logo_lbl)
         logo_row.addSpacing(14)
         app_name = QLabel("Legion Linux Toolkit")
-        app_name.setStyleSheet(f"color:{C_TEXT};font-size:20px;font-weight:bold;")
+        app_name.setStyleSheet(f"color:{C_TEXT};font-size:20px;font-weight:600;")
         logo_row.addWidget(app_name); logo_row.addStretch()
         root.addLayout(logo_row)
         root.addSpacing(20)
@@ -2628,7 +2628,7 @@ class FirstRunWizard(QDialog):
         self._next_btn.clicked.connect(self._go_next)
         self._next_btn.setStyleSheet(
             f"QPushButton{{background:{C_ACCENT};color:#fff;border:none;"
-            f"border-radius:6px;padding:8px 24px;font-size:13px;font-weight:bold;}}"
+            f"border-radius:6px;padding:8px 24px;font-size:13px;font-weight:600;}}"
             f"QPushButton:hover{{background:#aa2222;}}"
         )
         btn_row.addWidget(self._back_btn); btn_row.addWidget(self._next_btn)
@@ -2648,7 +2648,7 @@ class FirstRunWizard(QDialog):
         w = QWidget(); w.setStyleSheet("background:transparent;")
         lay = QVBoxLayout(w); lay.setContentsMargins(0,0,0,0); lay.setSpacing(10)
         title = QLabel("Choose Your Language")
-        title.setStyleSheet(f"color:{C_TEXT};font-size:16px;font-weight:bold;")
+        title.setStyleSheet(f"color:{C_TEXT};font-size:16px;font-weight:600;")
         desc = QLabel("Select the language for the interface.")
         desc.setStyleSheet(f"color:{C_TEXT2};font-size:12px;")
         lay.addWidget(title); lay.addWidget(desc); lay.addSpacing(8)
@@ -2672,7 +2672,7 @@ class FirstRunWizard(QDialog):
         w = QWidget(); w.setStyleSheet("background:transparent;")
         lay = QVBoxLayout(w); lay.setContentsMargins(0,0,0,0); lay.setSpacing(10)
         self._detect_title = QLabel("Hardware Detection")
-        self._detect_title.setStyleSheet(f"color:{C_TEXT};font-size:16px;font-weight:bold;")
+        self._detect_title.setStyleSheet(f"color:{C_TEXT};font-size:16px;font-weight:600;")
         self._detect_desc = QLabel("Scanning your device for supported features.\nThis runs once and the result is saved.")
         self._detect_desc.setStyleSheet(f"color:{C_TEXT2};font-size:12px;")
         self._detect_desc.setWordWrap(True)
@@ -2690,7 +2690,7 @@ class FirstRunWizard(QDialog):
         lay.addWidget(self._progress)
 
         self._detect_status = QLabel("")
-        self._detect_status.setStyleSheet(f"color:{C_TEXT3};font-size:11px;font-family:monospace;")
+        self._detect_status.setStyleSheet(f"color:{C_TEXT3};font-size:12px;font-family:monospace;")
         self._detect_status.setWordWrap(True)
         lay.addWidget(self._detect_status)
         lay.addStretch()
@@ -2700,7 +2700,7 @@ class FirstRunWizard(QDialog):
         w = QWidget(); w.setStyleSheet("background:transparent;")
         lay = QVBoxLayout(w); lay.setContentsMargins(0,0,0,0); lay.setSpacing(10)
         done_title = QLabel("✓  Setup Complete")
-        done_title.setStyleSheet(f"color:{C_GREEN};font-size:18px;font-weight:bold;")
+        done_title.setStyleSheet(f"color:{C_GREEN};font-size:18px;font-weight:600;")
         done_desc = QLabel("Your hardware profile has been saved.\nThe dashboard is ready to use.")
         done_desc.setStyleSheet(f"color:{C_TEXT2};font-size:12px;")
         done_desc.setWordWrap(True)
@@ -2708,7 +2708,7 @@ class FirstRunWizard(QDialog):
 
         self._summary_lbl = QLabel("")
         self._summary_lbl.setStyleSheet(
-            f"color:{C_TEXT2};font-size:11px;font-family:monospace;"
+            f"color:{C_TEXT2};font-size:12px;font-family:monospace;"
             f"background:{C_CARD};border-radius:8px;padding:12px;")
         self._summary_lbl.setWordWrap(True)
         lay.addWidget(self._summary_lbl)
@@ -2935,7 +2935,7 @@ class NotifyToggle(QWidget):
         t = QLabel(title)
         t.setStyleSheet(f"color:{C_TEXT};font-size:13px;font-weight:500;background:transparent;border:none;")
         d = QLabel(desc)
-        d.setStyleSheet(f"color:{C_TEXT2};font-size:11px;background:transparent;border:none;")
+        d.setStyleSheet(f"color:{C_TEXT2};font-size:12px;background:transparent;border:none;")
         d.setWordWrap(True)
         col.addWidget(t); col.addWidget(d)
         lay.addLayout(col); lay.addStretch()
@@ -2953,7 +2953,7 @@ def _mk_lbl(text: str, color: str = None, size: int = 12, bold: bool = False) ->
     """Quick styled QLabel factory."""
     lbl = QLabel(text)
     c = color or C_TEXT2
-    w = "bold" if bold else "normal"
+    w = "600" if bold else "400"
     lbl.setStyleSheet(f"color:{c};font-size:{size}px;font-weight:{w};background:transparent;")
     lbl.setWordWrap(True)
     return lbl
@@ -2965,7 +2965,7 @@ def _mk_lineedit(text: str = "", width: int = 100, placeholder: str = "") -> "QL
     le.setFixedWidth(width)
     le.setStyleSheet(
         f"QLineEdit{{background:{C_CARD2};color:{C_TEXT};border:1px solid {C_BORDER};"
-        f"border-radius:5px;padding:4px 8px;font-size:11px;font-family:monospace;}}"
+        f"border-radius:5px;padding:4px 8px;font-size:12px;font-family:monospace;}}"
         f"QLineEdit:focus{{border:1px solid {C_ACCENT};}}"
     )
     return le
@@ -2979,7 +2979,7 @@ def make_card(title=""):
     card = QWidget()
     card.setStyleSheet(f"background:{C_CARD};border-radius:12px;border:1px solid {C_BORDER};")
     card.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
-    lay = QVBoxLayout(card); lay.setContentsMargins(20,16,20,16); lay.setSpacing(10)
+    lay = QVBoxLayout(card); lay.setContentsMargins(20,16,20,16); lay.setSpacing(12)
     if title:
         t = QLabel(title)
         t.setStyleSheet(f"color:{C_TEXT};font-size:14px;font-weight:600;background:transparent;border:none;")
@@ -3023,7 +3023,7 @@ class StatusBadge(QWidget):
         self._v.setText(v)
         if color:
             self._v.setStyleSheet(
-                f"color:{color};font-size:11px;font-weight:bold;background:transparent;border:none;"
+                f"color:{color};font-size:12px;font-weight:600;background:transparent;border:none;"
             )
 
 
@@ -3044,7 +3044,7 @@ class AIBadge(StatusBadge):
         # New row: value text + toggle
         row = QHBoxLayout(); row.setContentsMargins(0,0,0,0); row.setSpacing(4)
         self._v = QLabel("OFF")
-        self._v.setStyleSheet(f"color:{C_TEXT3};font-size:11px;font-weight:bold;background:transparent;border:none;")
+        self._v.setStyleSheet(f"color:{C_TEXT3};font-size:12px;font-weight:600;background:transparent;border:none;")
         self._v.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         self._tog = ToggleSwitch(path=None, on_change=self._handle_toggle, read_val="0")
         self._tog.setFixedSize(36, 20)
@@ -3054,7 +3054,7 @@ class AIBadge(StatusBadge):
     def _handle_toggle(self, val):
         col = C_GREEN if val else C_TEXT3
         self._v.setText("ON" if val else "OFF")
-        self._v.setStyleSheet(f"color:{col};font-size:11px;font-weight:bold;background:transparent;border:none;")
+        self._v.setStyleSheet(f"color:{col};font-size:12px;font-weight:600;background:transparent;border:none;")
         if self.toggled:
             self.toggled(val)
 
@@ -3062,7 +3062,7 @@ class AIBadge(StatusBadge):
         """Update visual state WITHOUT triggering the callback."""
         col = C_GREEN if is_on else C_TEXT3
         self._v.setText("ON" if is_on else "OFF")
-        self._v.setStyleSheet(f"color:{col};font-size:11px;font-weight:bold;background:transparent;border:none;")
+        self._v.setStyleSheet(f"color:{col};font-size:12px;font-weight:600;background:transparent;border:none;")
         self._tog._checked = is_on
         self._tog._cx = 22.0 if is_on else 4.0
         self._tog.update()
@@ -3088,7 +3088,7 @@ class ProfileBtn(QPushButton):
             f"QPushButton{{"
             f"  background:{C_CARD2};color:{C_TEXT2};"
             f"  border:1px solid {C_BORDER};border-radius:10px;"
-            f"  font-size:11px;text-align:center;padding:4px 2px;"
+            f"  font-size:12px;text-align:center;padding:4px 2px;"
             f"}}"
             f"QPushButton:checked{{"
             f"  background:rgba({int(color[1:3],16)},{int(color[3:5],16)},{int(color[5:7],16)},30);"
@@ -3108,10 +3108,10 @@ class ProfileBtn(QPushButton):
         lbl_icon.setStyleSheet("background:transparent;font-size:16px;")
         lbl_name = QLabel(label)
         lbl_name.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        lbl_name.setStyleSheet(f"background:transparent;font-size:11px;font-weight:bold;color:{color};")
+        lbl_name.setStyleSheet(f"background:transparent;font-size:12px;font-weight:600;color:{color};")
         lbl_desc = QLabel(desc)
         lbl_desc.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        lbl_desc.setStyleSheet(f"background:transparent;font-size:9px;color:{C_TEXT3};")
+        lbl_desc.setStyleSheet(f"background:transparent;font-size:12px;color:{C_TEXT3};")
         lay.addWidget(lbl_icon)
         lay.addWidget(lbl_name)
         lay.addWidget(lbl_desc)
@@ -3246,8 +3246,8 @@ class HomePage(QWidget):
         gpu_w, gpu_l = hw_col(3)
         self.gpu_pstate_lbl = QLabel("P-State: —")
         self.gpu_pstate_lbl.setStyleSheet(
-            f"color:{C_BLUE};font-size:9px;background:transparent;"
-            f"border:1px solid {C_BORDER};border-radius:3px;padding:1px 5px;"
+            f"color:{C_BLUE};font-size:12px;background:transparent;"
+            f"border:1px solid {C_BORDER};border-radius:4px;padding:2px 6px;"
         )
         self.gpu_pstate_lbl.setToolTip("GPU Performance State\nP0=Max  P2=Mid  P8=Idle")
         gpu_l.addWidget(col_hdr("GPU", self.gpu_pstate_lbl))
@@ -3296,7 +3296,7 @@ class HomePage(QWidget):
             t = QLabel(title)
             t.setStyleSheet(f"color:{C_TEXT};font-size:13px;font-weight:500;background:transparent;")
             d = QLabel(desc); d.setWordWrap(True)
-            d.setStyleSheet(f"color:{C_TEXT2};font-size:11px;background:transparent;")
+            d.setStyleSheet(f"color:{C_TEXT2};font-size:12px;background:transparent;")
             txt.addWidget(t); txt.addWidget(d)
             rl.addWidget(icon)
             rl.addLayout(txt, 1)
@@ -3412,7 +3412,7 @@ class HomePage(QWidget):
         ss.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
         ssl = QVBoxLayout(ss); ssl.setContentsMargins(16,12,16,12); ssl.setSpacing(8)
         ss_title = QLabel("System Status")
-        ss_title.setStyleSheet(f"color:{C_TEXT};font-size:13px;font-weight:bold;background:transparent;")
+        ss_title.setStyleSheet(f"color:{C_TEXT};font-size:13px;font-weight:600;background:transparent;")
         ssl.addWidget(ss_title)
         badge_row = QHBoxLayout(); badge_row.setSpacing(6)
         self.b_boost  = StatusBadge("CPU Boost","—",C_TEXT3,"AMD Boost: allows CPU to burst above base clock")
@@ -3556,7 +3556,7 @@ class HomePage(QWidget):
             col = C_GREEN if pst=="P0" else C_BLUE if pst in ["P1","P2"] else C_TEXT3
             self.gpu_pstate_lbl.setText(f"P-State: {pst}")
             self.gpu_pstate_lbl.setStyleSheet(
-                f"color:{col};font-size:11px;background:transparent;"
+                f"color:{col};font-size:12px;background:transparent;"
                 f"border:1px solid {col};border-radius:4px;padding:2px 8px;"
             )
         else:
@@ -3661,9 +3661,9 @@ class BatteryPage(QWidget):
         norm_row = QWidget(); norm_row.setStyleSheet("background:transparent;"); norm_row.setFixedHeight(56)
         nrl = QHBoxLayout(norm_row); nrl.setContentsMargins(0,0,0,0); nrl.setSpacing(0)
         ncol = QVBoxLayout(); ncol.setSpacing(2)
-        nt_lbl = QLabel("Normal Charging"); nt_lbl.setStyleSheet(f"color:{C_TEXT};font-size:13px;font-weight:bold;background:transparent;")
+        nt_lbl = QLabel("Normal Charging"); nt_lbl.setStyleSheet(f"color:{C_TEXT};font-size:13px;font-weight:600;background:transparent;")
         nd_lbl = QLabel("Standard mode — both conservation and rapid charge OFF.")
-        nd_lbl.setStyleSheet(f"color:{C_TEXT2};font-size:11px;background:transparent;")
+        nd_lbl.setStyleSheet(f"color:{C_TEXT2};font-size:12px;background:transparent;")
         ncol.addWidget(nt_lbl); ncol.addWidget(nd_lbl)
         nrl.addLayout(ncol); nrl.addStretch()
         nrl.addWidget(self._normal_toggle, alignment=Qt.AlignmentFlag.AlignVCenter)
@@ -3727,7 +3727,7 @@ class BatteryPage(QWidget):
                 "Set custom start/stop charge levels to preserve long-term battery health.\n"
                 "Example: Start=40%, Stop=80% avoids full cycles.")
             tp_desc.setWordWrap(True)
-            tp_desc.setStyleSheet(f"color:{C_TEXT2};font-size:11px;background:transparent;")
+            tp_desc.setStyleSheet(f"color:{C_TEXT2};font-size:12px;background:transparent;")
             tl.addWidget(tp_desc)
             tl.addWidget(make_div())
 
@@ -3762,7 +3762,7 @@ class BatteryPage(QWidget):
             tp_apply.setCursor(Qt.CursorShape.PointingHandCursor)
             tp_apply.clicked.connect(self._apply_tp_thresholds)
             self._tp_status = QLabel("")
-            self._tp_status.setStyleSheet(f"color:{C_GREEN};font-size:11px;background:transparent;")
+            self._tp_status.setStyleSheet(f"color:{C_GREEN};font-size:12px;background:transparent;")
             tp_btn_row = QHBoxLayout()
             tp_btn_row.addWidget(tp_apply); tp_btn_row.addWidget(self._tp_status); tp_btn_row.addStretch()
             tl.addLayout(tp_btn_row)
@@ -3782,7 +3782,7 @@ class BatteryPage(QWidget):
         start = self._tp_start.value()
         stop  = self._tp_stop.value()
         if start >= stop:
-            self._tp_status.setStyleSheet(f"color:{C_ORANGE};font-size:11px;background:transparent;")
+            self._tp_status.setStyleSheet(f"color:{C_ORANGE};font-size:12px;background:transparent;")
             self._tp_status.setText("✗  Start must be less than Stop")
             return
         def _do():
@@ -3793,11 +3793,11 @@ class BatteryPage(QWidget):
             r = subprocess.run(["pkexec","sh","-c",cmds],
                                capture_output=True, text=True, timeout=8)
             if r.returncode == 0:
-                self._tp_status.setStyleSheet(f"color:{C_GREEN};font-size:11px;background:transparent;")
+                self._tp_status.setStyleSheet(f"color:{C_GREEN};font-size:12px;background:transparent;")
                 self._tp_status.setText(f"✓  Start {start}%  Stop {stop}%")
                 send_notif("Charge Thresholds", f"Start {start}%  →  Stop {stop}%", "battery")
             else:
-                self._tp_status.setStyleSheet(f"color:{C_ORANGE};font-size:11px;background:transparent;")
+                self._tp_status.setStyleSheet(f"color:{C_ORANGE};font-size:12px;background:transparent;")
                 self._tp_status.setText(f"✗  {r.stderr.strip()[:80]}")
         threading.Thread(target=_do, daemon=True).start()
 
@@ -3819,7 +3819,7 @@ class BatteryPage(QWidget):
         bat_col    = C_GREEN if pct > 50 else C_ORANGE if pct > 20 else C_RED
         health_col = C_GREEN if health > 80 else C_ORANGE if health > 60 else C_RED
         self.pct_lbl.setText(f"{pct}%")
-        self.pct_lbl.setStyleSheet(f"color:{bat_col};font-size:40px;font-weight:bold;background:transparent;")
+        self.pct_lbl.setStyleSheet(f"color:{bat_col};font-size:40px;font-weight:600;background:transparent;")
         self.status_lbl.setText(f"Status: {s['status']}")
         self.health_lbl.setText(f"Health: {health}%")
         self.b_charge.update_value(f"{pct}%",    pct,    bat_col)
@@ -3861,7 +3861,7 @@ class PerformancePage(QWidget):
         bt = QLabel(_boost_label)
         bt.setStyleSheet(f"color:{C_TEXT};font-size:13px;font-weight:500;background:transparent;")
         bd = QLabel(_boost_desc)
-        bd.setStyleSheet(f"color:{C_TEXT2};font-size:11px;background:transparent;"); bd.setWordWrap(True)
+        bd.setStyleSheet(f"color:{C_TEXT2};font-size:12px;background:transparent;"); bd.setWordWrap(True)
         bt_col.addWidget(bt); bt_col.addWidget(bd)
         br.addLayout(bt_col); br.addStretch()
         _boost_read = "1" if _is_intel and rdsys(_boost_path,"1") == "0" else rdsys(_boost_path,"0")
@@ -3953,14 +3953,14 @@ class DisplayPage(QWidget):
         scroll.setStyleSheet("border:none;background:transparent;")
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         inner = QWidget(); inner.setStyleSheet(f"background:{C_BG};")
-        root = QVBoxLayout(inner); root.setContentsMargins(16,16,16,16); root.setSpacing(10)
+        root = QVBoxLayout(inner); root.setContentsMargins(24,24,24,24); root.setSpacing(12)
         lay = QVBoxLayout(self); lay.setContentsMargins(0,0,0,0); lay.addWidget(scroll)
         scroll.setWidget(inner)
 
         # ── Screen Brightness ─────────────────────────────────────────────────
         bc, bl = make_card("Screen Brightness")
         bl.addWidget(_mk_lbl(
-            "Display backlight brightness via sysfs.", C_TEXT2, size=11))
+            "Display backlight brightness via sysfs.", C_TEXT2, size=12))
 
         # Detect backlight path — scan known paths + all available
         _bl_paths = [
@@ -3990,12 +3990,12 @@ class DisplayPage(QWidget):
                 _min_bl = 0   # default to 0, allow full dim
 
             bl.addWidget(_mk_lbl(
-                f"Path: {self._bl_path}/brightness  ·  Max: {_max_bl}", C_TEXT3, size=10))
+                f"Path: {self._bl_path}/brightness  ·  Max: {_max_bl}", C_TEXT3, size=11))
 
             bri_row = QHBoxLayout(); bri_row.setSpacing(12)
             dim_lbl = QLabel("0%")
             dim_lbl.setFixedWidth(32)
-            dim_lbl.setStyleSheet(f"color:{C_TEXT3};font-size:11px;background:transparent;")
+            dim_lbl.setStyleSheet(f"color:{C_TEXT3};font-size:12px;background:transparent;")
             bri_row.addWidget(dim_lbl)
 
             self._screen_sl = QSlider(Qt.Orientation.Horizontal)
@@ -4011,14 +4011,14 @@ class DisplayPage(QWidget):
 
             max_lbl = QLabel("100%")
             max_lbl.setFixedWidth(36)
-            max_lbl.setStyleSheet(f"color:{C_TEXT3};font-size:11px;background:transparent;")
+            max_lbl.setStyleSheet(f"color:{C_TEXT3};font-size:12px;background:transparent;")
             bri_row.addWidget(max_lbl)
 
             # Percentage label
             self._bri_pct_lbl = QLabel(f"{int(_cur_bl/_max_bl*100)}%")
             self._bri_pct_lbl.setFixedWidth(42)
             self._bri_pct_lbl.setStyleSheet(
-                f"color:{C_BLUE};font-size:13px;font-weight:bold;background:transparent;")
+                f"color:{C_BLUE};font-size:13px;font-weight:600;background:transparent;")
             bri_row.addWidget(self._bri_pct_lbl)
             bl.addLayout(bri_row)
 
@@ -4064,7 +4064,7 @@ class DisplayPage(QWidget):
         # ── Resolution ────────────────────────────────────────────────────────
         resc, resl = make_card("Resolution")
         res_desc = QLabel("Change the display resolution. Takes effect immediately via kscreen.")
-        res_desc.setStyleSheet(f"color:{C_TEXT2};font-size:11px;background:transparent;")
+        res_desc.setStyleSheet(f"color:{C_TEXT2};font-size:12px;background:transparent;")
         resl.addWidget(res_desc)
 
         out_row = QHBoxLayout(); out_row.setSpacing(12)
@@ -4097,14 +4097,14 @@ class DisplayPage(QWidget):
         resl.addLayout(res_btn_row)
 
         self.res_note = QLabel("kscreen-doctor not found. Install: sudo pacman -S kscreen")
-        self.res_note.setStyleSheet(f"color:{C_ORANGE};font-size:11px;background:transparent;")
+        self.res_note.setStyleSheet(f"color:{C_ORANGE};font-size:12px;background:transparent;")
         resl.addWidget(self.res_note)
         root.addWidget(resc)
 
         # ── Refresh Rate ──────────────────────────────────────────────────────
         rrc, rrl = make_card("Refresh Rate")
         rr_desc = QLabel("Set the display refresh rate for the current resolution.")
-        rr_desc.setStyleSheet(f"color:{C_TEXT2};font-size:11px;background:transparent;")
+        rr_desc.setStyleSheet(f"color:{C_TEXT2};font-size:12px;background:transparent;")
         rrl.addWidget(rr_desc)
 
         hz_row = QHBoxLayout(); hz_row.setSpacing(12)
@@ -4254,7 +4254,7 @@ class DisplayPage(QWidget):
         policy_str = _idx_to_str.get(idx, "never")
         label  = _idx_to_label.get(idx, "Never")
 
-        self._vrr_status.setStyleSheet(f"color:{C_ORANGE};font-size:11px;background:transparent;")
+        self._vrr_status.setStyleSheet(f"color:{C_ORANGE};font-size:12px;background:transparent;")
         self._vrr_status.setText("⏳  Applying…")
 
         def _do():
@@ -4281,13 +4281,13 @@ class DisplayPage(QWidget):
                     Qt.ConnectionType.QueuedConnection,
                     Q_ARG(str, f"✗  {errors[0]}"))
                 self._vrr_status.setStyleSheet(
-                    f"color:{C_ORANGE};font-size:11px;background:transparent;")
+                    f"color:{C_ORANGE};font-size:12px;background:transparent;")
             else:
                 QMetaObject.invokeMethod(self._vrr_status, "setText",
                     Qt.ConnectionType.QueuedConnection,
                     Q_ARG(str, f"✓  VRR set to {label}"))
                 self._vrr_status.setStyleSheet(
-                    f"color:{C_GREEN};font-size:11px;background:transparent;")
+                    f"color:{C_GREEN};font-size:12px;background:transparent;")
                 send_notif("VRR / FreeSync", f"Adaptive sync → {label}", "display")
 
         threading.Thread(target=_do, daemon=True).start()
@@ -4349,7 +4349,7 @@ class KeyboardPage(QWidget):
         """Always runs on main thread via signal."""
         color = C_GREEN if ok else C_ORANGE
         self._status_lbl.setStyleSheet(
-            f"color:{color};font-size:11px;font-weight:bold;background:transparent;")
+            f"color:{color};font-size:12px;font-weight:600;background:transparent;")
         self._status_lbl.setText(msg)
 
     def _status(self, ok, msg: str):
@@ -4362,7 +4362,7 @@ class KeyboardPage(QWidget):
         scroll.setStyleSheet("border:none;background:transparent;")
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         inner = QWidget(); inner.setStyleSheet(f"background:{C_BG};")
-        root = QVBoxLayout(inner); root.setContentsMargins(16,16,16,16); root.setSpacing(10)
+        root = QVBoxLayout(inner); root.setContentsMargins(24,24,24,24); root.setSpacing(12)
         lay = QVBoxLayout(self); lay.setContentsMargins(0,0,0,0); lay.addWidget(scroll)
         scroll.setWidget(inner)
 
@@ -4376,7 +4376,7 @@ class KeyboardPage(QWidget):
         if has_la:
             ver = _legionaura_version()
             ok_lbl = QLabel(f"✓  legionaura ready   {ver}")
-            ok_lbl.setStyleSheet(f"color:{C_GREEN};font-size:11px;background:transparent;")
+            ok_lbl.setStyleSheet(f"color:{C_GREEN};font-size:12px;background:transparent;")
             bl.addWidget(ok_lbl)
         else:
             warn_w = QWidget(); warn_w.setObjectName("la_warn")
@@ -4392,7 +4392,7 @@ class KeyboardPage(QWidget):
                 "Install from AUR:  yay -S legionaura", C_TEXT2))
             cmd_lbl = QLabel("yay -S legionaura")
             cmd_lbl.setStyleSheet(
-                f"color:{C_TEXT};font-family:monospace;font-size:11px;"
+                f"color:{C_TEXT};font-family:monospace;font-size:12px;"
                 f"background:{C_CARD2};padding:4px 10px;border-radius:4px;")
             wl.addWidget(cmd_lbl)
             bl.addWidget(warn_w)
@@ -4440,7 +4440,7 @@ class KeyboardPage(QWidget):
             b.setStyleSheet(
                 f"QPushButton{{background:{C_CARD2};color:{C_TEXT2};"
                 f"border:1px solid {C_BORDER};border-radius:6px;"
-                f"font-size:12px;font-weight:bold;padding:0 12px;}}"
+                f"font-size:12px;font-weight:600;padding:0 12px;}}"
                 f"QPushButton:checked{{background:transparent;color:{color};"
                 f"border:2px solid {color};}}"
                 f"QPushButton:hover:!checked{{border:1px solid #555;color:{C_TEXT};}}"
@@ -4496,7 +4496,7 @@ class KeyboardPage(QWidget):
             pb.setFixedHeight(28)
             c1 = f"#{pcols[0]}"
             pb.setStyleSheet(
-                f"QPushButton{{background:{C_CARD2};color:{C_TEXT};font-size:11px;"
+                f"QPushButton{{background:{C_CARD2};color:{C_TEXT};font-size:12px;"
                 f"border:none;border-radius:5px;padding:0 10px;"
                 f"border-left:3px solid {c1};}}"
                 f"QPushButton:hover{{background:{C_BORDER};}}"
@@ -4580,13 +4580,13 @@ class KeyboardPage(QWidget):
         apply_btn = QPushButton("Apply Effect")
         apply_btn.setFixedHeight(38)
         apply_btn.setStyleSheet(
-            f"background:{C_ACCENT};color:#fff;font-size:13px;font-weight:bold;"
+            f"background:{C_ACCENT};color:#fff;font-size:13px;font-weight:600;"
             f"border:none;border-radius:7px;padding:0 28px;"
         )
         apply_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         apply_btn.clicked.connect(self._apply)
         self._status_lbl = QLabel("")
-        self._status_lbl.setStyleSheet(f"color:{C_TEXT2};font-size:11px;background:transparent;")
+        self._status_lbl.setStyleSheet(f"color:{C_TEXT2};font-size:12px;background:transparent;")
         apply_row.addWidget(apply_btn)
         apply_row.addWidget(self._status_lbl); apply_row.addStretch()
         el.addLayout(apply_row)
@@ -4683,7 +4683,7 @@ class KeyboardPage(QWidget):
 
         # Set pending status directly on main thread
         self._status_lbl.setStyleSheet(
-            f"color:{C_TEXT2};font-size:11px;background:transparent;")
+            f"color:{C_TEXT2};font-size:12px;background:transparent;")
         self._status_lbl.setText(f"⏳  Applying {eff}…")
 
         def _cb(ok, msg):
@@ -4707,7 +4707,7 @@ class SystemPage(QWidget):
         scroll.setStyleSheet("border:none;background:transparent;")
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         inner = QWidget(); inner.setStyleSheet(f"background:{C_BG};")
-        root = QVBoxLayout(inner); root.setContentsMargins(16,16,16,16); root.setSpacing(10)
+        root = QVBoxLayout(inner); root.setContentsMargins(24,24,24,24); root.setSpacing(12)
         lay = QVBoxLayout(self); lay.setContentsMargins(0,0,0,0); lay.addWidget(scroll)
         scroll.setWidget(inner)
 
@@ -4735,7 +4735,7 @@ class SystemPage(QWidget):
             tp_c, tp_l = make_card("🔴  TrackPoint")
             tp_l.addWidget(_mk_lbl(
                 "Adjust the red TrackPoint pointing stick sensitivity and speed.",
-                C_TEXT2, size=11))
+                C_TEXT2, size=12))
             tp_l.addWidget(make_div())
 
             def _tp_serio_path(attr: str) -> "Path | None":
@@ -4761,7 +4761,7 @@ class SystemPage(QWidget):
                     f"QSlider::sub-page:horizontal{{background:{color};border-radius:3px;}}"
                 )
                 vl = QLabel(str(sl.value())); vl.setFixedWidth(30)
-                vl.setStyleSheet(f"color:{color};font-size:12px;font-weight:bold;background:transparent;")
+                vl.setStyleSheet(f"color:{color};font-size:12px;font-weight:600;background:transparent;")
                 sl.valueChanged.connect(lambda v, l=vl, p=path: (l.setText(str(v)),
                     _tp_serio_path(attr) and _tp_serio_path(attr).write_text(str(v))))
                 row.addWidget(lb); row.addWidget(sl); row.addWidget(vl)
@@ -4782,9 +4782,9 @@ class SystemPage(QWidget):
             rot_row = QHBoxLayout(); rot_row.setSpacing(16)
             rot_text = QVBoxLayout(); rot_text.setSpacing(2)
             rot_t = QLabel("Orientation Lock")
-            rot_t.setStyleSheet(f"color:{C_TEXT};font-size:13px;font-weight:bold;background:transparent;")
+            rot_t.setStyleSheet(f"color:{C_TEXT};font-size:13px;font-weight:600;background:transparent;")
             rot_d = QLabel("When ON, rotation is locked to current orientation.")
-            rot_d.setStyleSheet(f"color:{C_TEXT2};font-size:11px;background:transparent;")
+            rot_d.setStyleSheet(f"color:{C_TEXT2};font-size:12px;background:transparent;")
             rot_text.addWidget(rot_t); rot_text.addWidget(rot_d)
             rot_row.addLayout(rot_text, 1)
 
@@ -4792,7 +4792,7 @@ class SystemPage(QWidget):
             rot_row.addWidget(self._rot_lock_tog, 0, Qt.AlignmentFlag.AlignVCenter)
             yr_l.addLayout(rot_row)
             self._rot_status = QLabel("")
-            self._rot_status.setStyleSheet(f"color:{C_GREEN};font-size:11px;background:transparent;")
+            self._rot_status.setStyleSheet(f"color:{C_GREEN};font-size:12px;background:transparent;")
             yr_l.addWidget(self._rot_status)
             root.addWidget(yr_c)
 
@@ -4813,10 +4813,10 @@ class SystemPage(QWidget):
         th_row.addWidget(self.theme_combo); th_row.addStretch()
         al.addLayout(th_row)
         th_desc = QLabel("Changes the application theme. Applied immediately.")
-        th_desc.setStyleSheet(f"color:{C_TEXT2};font-size:11px;background:transparent;")
+        th_desc.setStyleSheet(f"color:{C_TEXT2};font-size:12px;background:transparent;")
         al.addWidget(th_desc)
         self._app_status = QLabel("")
-        self._app_status.setStyleSheet(f"color:{C_GREEN};font-size:11px;background:transparent;")
+        self._app_status.setStyleSheet(f"color:{C_GREEN};font-size:12px;background:transparent;")
         al.addWidget(self._app_status)
         root.addWidget(ac)
 
@@ -4834,11 +4834,11 @@ class SystemPage(QWidget):
                 except: pass
                 return "—"
             self._yoga_mode_lbl = QLabel(f"Current mode: {_get_yoga_mode()}")
-            self._yoga_mode_lbl.setStyleSheet(f"color:{C_BLUE};font-size:13px;font-weight:bold;background:transparent;")
+            self._yoga_mode_lbl.setStyleSheet(f"color:{C_BLUE};font-size:13px;font-weight:600;background:transparent;")
             yl.addWidget(self._yoga_mode_lbl)
             yoga_ref = QPushButton("🔄  Refresh Mode")
             yoga_ref.setFixedHeight(30)
-            yoga_ref.setStyleSheet(f"background:{C_CARD2};color:{C_TEXT};border:1px solid {C_BORDER};border-radius:6px;font-size:11px;")
+            yoga_ref.setStyleSheet(f"background:{C_CARD2};color:{C_TEXT};border:1px solid {C_BORDER};border-radius:6px;font-size:12px;")
             yoga_ref.clicked.connect(lambda: self._yoga_mode_lbl.setText(f"Current mode: {_get_yoga_mode()}"))
             yl.addWidget(yoga_ref)
             root.addWidget(yc)
@@ -4917,7 +4917,7 @@ class OverclockPage(QWidget):
         scroll.setStyleSheet("border:none;background:transparent;")
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         inner = QWidget(); inner.setStyleSheet(f"background:{C_BG};")
-        root = QVBoxLayout(inner); root.setContentsMargins(16,16,16,16); root.setSpacing(10)
+        root = QVBoxLayout(inner); root.setContentsMargins(24,24,24,24); root.setSpacing(12)
         lay = QVBoxLayout(self); lay.setContentsMargins(0,0,0,0); lay.addWidget(scroll)
         scroll.setWidget(inner)
 
@@ -4929,13 +4929,13 @@ class OverclockPage(QWidget):
         )
         wl = QVBoxLayout(warn_card); wl.setContentsMargins(16,12,16,12); wl.setSpacing(4)
         wt = QLabel("⚠️  Overclock / TDP Warning")
-        wt.setStyleSheet(f"color:{C_ORANGE};font-size:14px;font-weight:bold;")
+        wt.setStyleSheet(f"color:{C_ORANGE};font-size:14px;font-weight:600;")
         wd = QLabel(
             "Changes apply immediately. Instability or data loss can occur. "
             "GPU clock offsets require nvidia-settings with Coolbits=28. "
             "TDP changes via RAPL are reset on reboot unless saved to profile."
         )
-        wd.setWordWrap(True); wd.setStyleSheet(f"color:{C_TEXT2};font-size:11px;")
+        wd.setWordWrap(True); wd.setStyleSheet(f"color:{C_TEXT2};font-size:12px;")
         wl.addWidget(wt); wl.addWidget(wd); root.addWidget(warn_card)
 
         # ── OC Master Toggle ───────────────────────────────────────────────────
@@ -4943,13 +4943,13 @@ class OverclockPage(QWidget):
         tog_row = QHBoxLayout(); tog_row.setSpacing(16)
         tog_text = QVBoxLayout(); tog_text.setSpacing(2)
         tog_title = QLabel("Enable Overclock")
-        tog_title.setStyleSheet(f"color:{C_TEXT};font-size:13px;font-weight:bold;background:transparent;")
+        tog_title.setStyleSheet(f"color:{C_TEXT};font-size:13px;font-weight:600;background:transparent;")
         tog_desc = QLabel(
             "When OFF, CPU runs at stock max frequency and GPU OC is reset. "
             "Toggle ON to apply saved OC settings immediately."
         )
         tog_desc.setWordWrap(True)
-        tog_desc.setStyleSheet(f"color:{C_TEXT2};font-size:11px;background:transparent;")
+        tog_desc.setStyleSheet(f"color:{C_TEXT2};font-size:12px;background:transparent;")
         tog_text.addWidget(tog_title); tog_text.addWidget(tog_desc)
         tog_row.addLayout(tog_text, 1)
         oc_enabled = self._cfg.get("oc_enabled", False)
@@ -4961,7 +4961,7 @@ class OverclockPage(QWidget):
         tog_row.addWidget(self._oc_toggle, 0, Qt.AlignmentFlag.AlignVCenter)
         tl.addLayout(tog_row)
         self._oc_status = QLabel("")
-        self._oc_status.setStyleSheet(f"color:{C_GREEN};font-size:11px;background:transparent;")
+        self._oc_status.setStyleSheet(f"color:{C_GREEN};font-size:12px;background:transparent;")
         tl.addWidget(self._oc_status)
         root.addWidget(tc)
 
@@ -5071,7 +5071,7 @@ class OverclockPage(QWidget):
         cpu_btn_row.addStretch()
         cl.addLayout(cpu_btn_row)
         self.cpu_status = QLabel("")
-        self.cpu_status.setStyleSheet(f"color:{C_GREEN};font-size:11px;background:transparent;")
+        self.cpu_status.setStyleSheet(f"color:{C_GREEN};font-size:12px;background:transparent;")
         cl.addWidget(self.cpu_status)
         oc_root.addWidget(cc)
         _gpu_label = "GPU"
@@ -5091,12 +5091,12 @@ class OverclockPage(QWidget):
             "Power limit (nvidia-smi) works without Coolbits."
         )
         req_lbl.setWordWrap(True)
-        req_lbl.setStyleSheet(f"color:{C_TEXT2};font-size:11px;background:transparent;")
+        req_lbl.setStyleSheet(f"color:{C_TEXT2};font-size:12px;background:transparent;")
         gl.addWidget(req_lbl)
 
         # Live GPU stats row
         self.gpu_live = QLabel("Querying…")
-        self.gpu_live.setStyleSheet(f"color:{C_TEXT3};font-size:11px;background:transparent;")
+        self.gpu_live.setStyleSheet(f"color:{C_TEXT3};font-size:12px;background:transparent;")
         gl.addWidget(self.gpu_live)
         gl.addWidget(make_div())
 
@@ -5135,7 +5135,7 @@ class OverclockPage(QWidget):
         gpu_btn_row.addStretch()
         gl.addLayout(gpu_btn_row)
         self.gpu_status = QLabel("")
-        self.gpu_status.setStyleSheet(f"color:{C_GREEN};font-size:11px;background:transparent;")
+        self.gpu_status.setStyleSheet(f"color:{C_GREEN};font-size:12px;background:transparent;")
         gl.addWidget(self.gpu_status)
         oc_root.addWidget(gc)
 
@@ -5172,10 +5172,10 @@ class OverclockPage(QWidget):
                 f"{g['freq']} MHz  ·  {g['mem_used']}/{g['mem_total']} MB  ·  "
                 f"{g['power']:.0f}W  ·  {g['pstate']}"
             )
-            self.gpu_live.setStyleSheet(f"color:{C_TEXT2};font-size:11px;background:transparent;")
+            self.gpu_live.setStyleSheet(f"color:{C_TEXT2};font-size:12px;background:transparent;")
         else:
             self.gpu_live.setText("nvidia-smi not available")
-            self.gpu_live.setStyleSheet(f"color:{C_TEXT3};font-size:11px;background:transparent;")
+            self.gpu_live.setStyleSheet(f"color:{C_TEXT3};font-size:12px;background:transparent;")
 
     def _apply_cpu(self):
         mhz     = self.cpu_freq_spin.value()
@@ -5324,7 +5324,7 @@ class FanPage(QWidget):
     def _on_fan_result(self, ok: bool, msg: str):
         color = C_GREEN if ok else C_ORANGE
         self._status.setStyleSheet(
-            f"color:{color};font-size:11px;font-weight:bold;background:transparent;")
+            f"color:{color};font-size:12px;font-weight:600;background:transparent;")
         self._status.setText(msg)
 
     def _emit(self, ok: bool, msg: str):
@@ -5335,7 +5335,7 @@ class FanPage(QWidget):
         scroll.setStyleSheet("border:none;background:transparent;")
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         inner = QWidget(); inner.setStyleSheet(f"background:{C_BG};")
-        root = QVBoxLayout(inner); root.setContentsMargins(16,16,16,16); root.setSpacing(10)
+        root = QVBoxLayout(inner); root.setContentsMargins(24,24,24,24); root.setSpacing(12)
         lay = QVBoxLayout(self); lay.setContentsMargins(0,0,0,0); lay.addWidget(scroll)
         scroll.setWidget(inner)
 
@@ -5358,10 +5358,10 @@ class FanPage(QWidget):
             lbl = QLabel("— RPM")
             lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
             lbl.setStyleSheet(
-                f"color:{color};font-size:22px;font-weight:bold;background:transparent;")
+                f"color:{color};font-size:22px;font-weight:600;background:transparent;")
             name = QLabel(label)
             name.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            name.setStyleSheet(f"color:{C_TEXT2};font-size:11px;background:transparent;")
+            name.setStyleSheet(f"color:{C_TEXT2};font-size:12px;background:transparent;")
             setattr(self, attr, lbl)
             col.addLayout(fan_w_wrap); col.addWidget(lbl); col.addWidget(name)
             rpm_row.addLayout(col)
@@ -5370,7 +5370,7 @@ class FanPage(QWidget):
         self.fan_mode_badge = QLabel("Mode: Auto")
         self.fan_mode_badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.fan_mode_badge.setStyleSheet(
-            f"color:{C_TEXT3};font-size:11px;background:transparent;")
+            f"color:{C_TEXT3};font-size:12px;background:transparent;")
         rl.addWidget(self.fan_mode_badge)
         root.addWidget(rc)
 
@@ -5421,7 +5421,7 @@ class FanPage(QWidget):
         
         note = QLabel("\n".join(note_lines))
         note.setWordWrap(True)
-        note.setStyleSheet(f"color:{C_TEXT2};font-size:11px;background:transparent;")
+        note.setStyleSheet(f"color:{C_TEXT2};font-size:12px;background:transparent;")
         cl.addWidget(note)
         cl.addWidget(make_div())
 
@@ -5434,7 +5434,7 @@ class FanPage(QWidget):
         self._auto_btn.setStyleSheet(
             f"QPushButton{{background:{C_CARD2};color:{C_TEXT2};"
             f"border:1px solid {C_BORDER};border-radius:8px;"
-            f"font-size:13px;font-weight:bold;}}"
+            f"font-size:13px;font-weight:600;}}"
             f"QPushButton:checked{{background:transparent;color:{C_GREEN};"
             f"border:2px solid {C_GREEN};}}"
             f"QPushButton:hover:!checked{{border:1px solid #555;color:{C_TEXT};}}"
@@ -5448,7 +5448,7 @@ class FanPage(QWidget):
         self._full_btn.setStyleSheet(
             f"QPushButton{{background:{C_CARD2};color:{C_TEXT2};"
             f"border:1px solid {C_BORDER};border-radius:8px;"
-            f"font-size:13px;font-weight:bold;}}"
+            f"font-size:13px;font-weight:600;}}"
             f"QPushButton:checked{{background:transparent;color:{C_RED};"
             f"border:2px solid {C_RED};}}"
             f"QPushButton:hover:!checked{{border:1px solid #555;color:{C_TEXT};}}"
@@ -5465,7 +5465,7 @@ class FanPage(QWidget):
         self._lockfan_btn.setStyleSheet(
             f"QPushButton{{background:{C_CARD2};color:{C_TEXT2};"
             f"border:1px solid {C_BORDER};border-radius:8px;"
-            f"font-size:13px;font-weight:bold;}}"
+            f"font-size:13px;font-weight:600;}}"
             f"QPushButton:checked{{background:{C_RED};color:{C_BG};}}"
             f"QPushButton:hover:!checked{{border:1px solid {C_RED};}}"
         )
@@ -5481,7 +5481,7 @@ class FanPage(QWidget):
         self._minifan_btn.setStyleSheet(
             f"QPushButton{{background:{C_CARD2};color:{C_TEXT2};"
             f"border:1px solid {C_BORDER};border-radius:8px;"
-            f"font-size:13px;font-weight:bold;}}"
+            f"font-size:13px;font-weight:600;}}"
             f"QPushButton:checked{{background:{C_GREEN};color:{C_BG};}}"
             f"QPushButton:hover:!checked{{border:1px solid {C_GREEN};}}"
         )
@@ -5495,14 +5495,14 @@ class FanPage(QWidget):
         self._mode_desc = QLabel(
             "Firmware controls fans based on CPU/GPU temperature. Recommended.")
         self._mode_desc.setStyleSheet(
-            f"color:{C_TEXT2};font-size:11px;background:transparent;")
+            f"color:{C_TEXT2};font-size:12px;background:transparent;")
         self._mode_desc.setWordWrap(True)
         cl.addWidget(self._mode_desc)
 
         # Status
         self._status = QLabel("")
         self._status.setStyleSheet(
-            f"color:{C_GREEN};font-size:11px;background:transparent;")
+            f"color:{C_GREEN};font-size:12px;background:transparent;")
         cl.addWidget(self._status)
         
         # ── 10-Point Fan Curve Editor ──────────────────────────────────────────────────
@@ -5525,7 +5525,7 @@ class FanPage(QWidget):
             
             # Headers
             header = QLabel("Pt | CPU Temp | Fan1 PWM | Fan2 PWM | Accel | Decel")
-            header.setStyleSheet(f"color:{C_ACCENT};font-weight:bold;font-size:11px;")
+            header.setStyleSheet(f"color:{C_ACCENT};font-weight:600;font-size:12px;")
             curve_layout.addWidget(header)
             
             # Parse current curve
@@ -5635,7 +5635,7 @@ class FanPage(QWidget):
             "Each profile has its own firmware-defined fan curve baked in."
         )
         info_text.setWordWrap(True)
-        info_text.setStyleSheet(f"color:{C_TEXT2};font-size:11px;background:transparent;")
+        info_text.setStyleSheet(f"color:{C_TEXT2};font-size:12px;background:transparent;")
         il.addWidget(info_text)
         root.addWidget(ic)
 
@@ -5687,7 +5687,7 @@ class FanPage(QWidget):
             tp_fan_apply.setCursor(Qt.CursorShape.PointingHandCursor)
             tp_fan_apply.clicked.connect(self._apply_tp_fan)
             self._tp_fan_status = QLabel("")
-            self._tp_fan_status.setStyleSheet(f"color:{C_GREEN};font-size:11px;background:transparent;")
+            self._tp_fan_status.setStyleSheet(f"color:{C_GREEN};font-size:12px;background:transparent;")
             tp_btn_row = QHBoxLayout()
             tp_btn_row.addWidget(tp_fan_apply); tp_btn_row.addWidget(self._tp_fan_status); tp_btn_row.addStretch()
             tfl.addLayout(tp_btn_row)
@@ -5835,7 +5835,7 @@ class FanPage(QWidget):
         ]:
             c = C_RED if rpm > 5000 else C_ORANGE if rpm > 2500 else base_col
             lbl.setStyleSheet(
-                f"color:{c};font-size:22px;font-weight:bold;background:transparent;")
+                f"color:{c};font-size:22px;font-weight:600;background:transparent;")
 
     def refresh(self, d=None):
         self._refresh_rpm()
@@ -5849,7 +5849,7 @@ class ActionsPage(QWidget):
 # ══════════════════════════════════════════════════════════════════════════════
         color = C_GREEN if ok else C_ORANGE
         self._status.setStyleSheet(
-            f"color:{color};font-size:11px;font-weight:bold;background:transparent;")
+            f"color:{color};font-size:12px;font-weight:600;background:transparent;")
         self._status.setText(msg)
 
     def _build(self):
@@ -5857,7 +5857,7 @@ class ActionsPage(QWidget):
         scroll.setStyleSheet("border:none;background:transparent;")
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         inner = QWidget(); inner.setStyleSheet(f"background:{C_BG};")
-        root = QVBoxLayout(inner); root.setContentsMargins(16,16,16,16); root.setSpacing(10)
+        root = QVBoxLayout(inner); root.setContentsMargins(24,24,24,24); root.setSpacing(12)
         lay = QVBoxLayout(self); lay.setContentsMargins(0,0,0,0); lay.addWidget(scroll)
         scroll.setWidget(inner)
 
@@ -5886,7 +5886,7 @@ class ActionsPage(QWidget):
                 "⚠  legion_hwmon not found.\n"
                 "Make sure lenovo_legion_laptop module is loaded:\n"
                 "sudo modprobe lenovo_legion_laptop")
-            status_lbl.setStyleSheet(f"color:{C_ORANGE};font-size:11px;background:transparent;")
+            status_lbl.setStyleSheet(f"color:{C_ORANGE};font-size:12px;background:transparent;")
         status_lbl.setWordWrap(True)
         fl.addWidget(status_lbl)
         root.addWidget(fc)
@@ -5902,16 +5902,16 @@ class ActionsPage(QWidget):
             icon = QLabel("🌀"); icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
             icon.setStyleSheet("font-size:22px;background:transparent;")
             lbl = QLabel("— RPM"); lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            lbl.setStyleSheet(f"color:{color};font-size:20px;font-weight:bold;background:transparent;")
+            lbl.setStyleSheet(f"color:{color};font-size:20px;font-weight:600;background:transparent;")
             name = QLabel(label); name.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            name.setStyleSheet(f"color:{C_TEXT2};font-size:11px;background:transparent;")
+            name.setStyleSheet(f"color:{C_TEXT2};font-size:12px;background:transparent;")
             setattr(self, attr, lbl)
             col.addWidget(icon); col.addWidget(lbl); col.addWidget(name)
             rpm_row.addLayout(col)
         rl.addLayout(rpm_row)
         self.fan_mode_badge = QLabel("Mode: Auto")
         self.fan_mode_badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.fan_mode_badge.setStyleSheet(f"color:{C_TEXT2};font-size:11px;background:transparent;")
+        self.fan_mode_badge.setStyleSheet(f"color:{C_TEXT2};font-size:12px;background:transparent;")
         rl.addWidget(self.fan_mode_badge)
         root.addWidget(rc)
 
@@ -5930,7 +5930,7 @@ class ActionsPage(QWidget):
             btn.setStyleSheet(
                 f"QPushButton{{background:{C_CARD2};color:{C_TEXT2};"
                 f"border:1px solid {C_BORDER};border-radius:6px;"
-                f"font-size:12px;font-weight:bold;padding:0 8px;}}"
+                f"font-size:12px;font-weight:600;padding:0 8px;}}"
                 f"QPushButton:checked{{background:transparent;color:{color};"
                 f"border:2px solid {color};}}"
                 f"QPushButton:hover:!checked{{border:1px solid #555;color:{C_TEXT};}}"
@@ -5940,7 +5940,7 @@ class ActionsPage(QWidget):
             self._mode_btns[mode_key] = btn; mode_row.addWidget(btn)
         ml.addLayout(mode_row)
         self._mode_desc = QLabel(self._mode_hint(self._cfg.get("mode","auto")))
-        self._mode_desc.setStyleSheet(f"color:{C_TEXT2};font-size:11px;background:transparent;")
+        self._mode_desc.setStyleSheet(f"color:{C_TEXT2};font-size:12px;background:transparent;")
         self._mode_desc.setWordWrap(True)
         ml.addWidget(self._mode_desc)
         root.addWidget(mc)
@@ -5949,24 +5949,38 @@ class ActionsPage(QWidget):
         pc, pl = make_card("Fan Presets")
         pl.addWidget(_mk_lbl(
             "Quick presets. If manual PWM is available, sets exact speed.\n"
-            "Otherwise maps to Auto or Full Speed.", C_TEXT2, size=11))
-        preset_grid = QGridLayout(); preset_grid.setSpacing(8)
-        for i, (pname, (cpu_pct, gpu_pct)) in enumerate(FAN_PRESETS.items()):
-            color = [C_BLUE, C_GREEN, C_ORANGE, C_RED, "#ff0000"][i % 5]
-            btn = QPushButton(f"{pname}\n{cpu_pct}% / {gpu_pct}%")
-            btn.setFixedHeight(52)
-            btn.setStyleSheet(
-                f"QPushButton{{background:{C_CARD2};color:{C_TEXT};"
-                f"border:1px solid {C_BORDER};border-radius:8px;font-size:11px;"
-                f"border-top:3px solid {color};}}"
-                f"QPushButton:hover{{background:{color}22;border-color:{color};}}"
-                f"QPushButton:pressed{{background:{color}44;}}"
-            )
-            btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn.clicked.connect(lambda chk, pn=pname, cp=cpu_pct, gp=gpu_pct:
-                                self._apply_preset(pn, cp, gp))
-            preset_grid.addWidget(btn, i//3, i%3)
-        pl.addLayout(preset_grid)
+            "Otherwise maps to Auto or Full Speed.", C_TEXT2, size=12))
+        preset_wrap = QWidget()
+        preset_wrap.setStyleSheet("background:transparent;")
+        preset_lay = QVBoxLayout(preset_wrap)
+        preset_lay.setContentsMargins(0, 8, 0, 0)
+        preset_lay.setSpacing(8)
+        preset_list = list(FAN_PRESETS.items())
+        for row_i in range(0, len(preset_list), 3):
+            row = QHBoxLayout()
+            row.setSpacing(8)
+            for col_i in range(3):
+                idx = row_i + col_i
+                if idx >= len(preset_list):
+                    row.addStretch()
+                    continue
+                pname, (cpu_pct, gpu_pct) = preset_list[idx]
+                color = [C_BLUE, C_GREEN, C_ORANGE, C_RED, "#ff0000"][idx % 5]
+                btn = QPushButton(f"{pname}  —  {cpu_pct}% CPU / {gpu_pct}% GPU")
+                btn.setFixedHeight(42)
+                btn.setStyleSheet(
+                    f"QPushButton{{background:{C_CARD2};color:{C_TEXT};"
+                    f"border:1px solid {C_BORDER};border-radius:8px;font-size:12px;font-weight:500;"
+                    f"border-left:3px solid {color};padding-left:12px;}}"
+                    f"QPushButton:hover{{background:{color}22;border-color:{color};}}"
+                    f"QPushButton:pressed{{background:{color}44;}}"
+                )
+                btn.setCursor(Qt.CursorShape.PointingHandCursor)
+                btn.clicked.connect(lambda chk, pn=pname, cp=cpu_pct, gp=gpu_pct:
+                                    self._apply_preset(pn, cp, gp))
+                row.addWidget(btn, 1)
+            preset_lay.addLayout(row)
+        pl.addWidget(preset_wrap)
         root.addWidget(pc)
 
         # ── Manual sliders ────────────────────────────────────────────────────
@@ -5977,7 +5991,7 @@ class ActionsPage(QWidget):
         def _slider_row(label, color, default):
             row = QHBoxLayout(); row.setSpacing(12)
             lb = QLabel(label); lb.setFixedWidth(70)
-            lb.setStyleSheet(f"color:{color};font-size:12px;font-weight:bold;background:transparent;")
+            lb.setStyleSheet(f"color:{color};font-size:12px;font-weight:600;background:transparent;")
             sl = QSlider(Qt.Orientation.Horizontal)
             sl.setRange(0,100); sl.setValue(default)
             sl.setStyleSheet(
@@ -5987,7 +6001,7 @@ class ActionsPage(QWidget):
                 f"QSlider::sub-page:horizontal{{background:{color};border-radius:4px;}}"
             )
             vl = QLabel(f"{default}%"); vl.setFixedWidth(40)
-            vl.setStyleSheet(f"color:{color};font-size:12px;font-weight:bold;background:transparent;")
+            vl.setStyleSheet(f"color:{color};font-size:12px;font-weight:600;background:transparent;")
             sl.valueChanged.connect(lambda v, l=vl: l.setText(f"{v}%"))
             row.addWidget(lb); row.addWidget(sl); row.addWidget(vl)
             return row, sl
@@ -5999,7 +6013,7 @@ class ActionsPage(QWidget):
         apply_btn = QPushButton("Apply Manual Speed")
         apply_btn.setFixedHeight(34)
         apply_btn.setStyleSheet(
-            f"background:{C_ORANGE};color:#000;font-weight:bold;"
+            f"background:{C_ORANGE};color:#000;font-weight:600;"
             f"border:none;border-radius:6px;font-size:12px;padding:0 16px;")
         apply_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         apply_btn.clicked.connect(self._apply_manual)
@@ -6009,7 +6023,7 @@ class ActionsPage(QWidget):
 
         # Status label
         self._fan_status = QLabel("")
-        self._fan_status.setStyleSheet(f"color:{C_GREEN};font-size:11px;background:transparent;")
+        self._fan_status.setStyleSheet(f"color:{C_GREEN};font-size:12px;background:transparent;")
         root.addWidget(self._fan_status)
         root.addStretch()
 
@@ -6095,7 +6109,7 @@ class ActionsPage(QWidget):
         for lbl, rpm, col in [(self.cpu_rpm_lbl,rpm1,C_BLUE),(self.gpu_rpm_lbl,rpm2,C_RED)]:
             c = C_RED if rpm>5000 else C_ORANGE if rpm>2500 else col
             lbl.setStyleSheet(
-                f"color:{c};font-size:20px;font-weight:bold;background:transparent;")
+                f"color:{c};font-size:20px;font-weight:600;background:transparent;")
 
     def refresh(self, d=None):
         self._refresh_rpm()
@@ -6112,7 +6126,7 @@ class ActionsPage(QWidget):
         scroll.setStyleSheet("border:none;background:transparent;")
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         inner = QWidget(); inner.setStyleSheet(f"background:{C_BG};")
-        root = QVBoxLayout(inner); root.setContentsMargins(16,16,16,16); root.setSpacing(10)
+        root = QVBoxLayout(inner); root.setContentsMargins(24,24,24,24); root.setSpacing(12)
         lay = QVBoxLayout(self); lay.setContentsMargins(0,0,0,0); lay.addWidget(scroll)
         scroll.setWidget(inner)
 
@@ -6122,15 +6136,15 @@ class ActionsPage(QWidget):
             "The background sampler applies changes immediately — no separate daemon needed."
         )
         adesc.setWordWrap(True)
-        adesc.setStyleSheet(f"color:{C_TEXT2};font-size:11px;background:transparent;")
+        adesc.setStyleSheet(f"color:{C_TEXT2};font-size:12px;background:transparent;")
         al.addWidget(adesc); al.addWidget(make_div())
 
         sw = QHBoxLayout()
         swc = QVBoxLayout(); swc.setSpacing(2)
         st = QLabel("Enable Auto Switching")
-        st.setStyleSheet(f"color:{C_TEXT};font-size:13px;font-weight:bold;background:transparent;")
+        st.setStyleSheet(f"color:{C_TEXT};font-size:13px;font-weight:600;background:transparent;")
         sd = QLabel("Automatically change profile when charger is plugged/unplugged.")
-        sd.setStyleSheet(f"color:{C_TEXT2};font-size:11px;background:transparent;")
+        sd.setStyleSheet(f"color:{C_TEXT2};font-size:12px;background:transparent;")
         swc.addWidget(st); swc.addWidget(sd)
         sw.addLayout(swc); sw.addStretch()
         self.auto_toggle = ToggleSwitch(
@@ -6166,7 +6180,7 @@ class ActionsPage(QWidget):
         al.addLayout(test_row)
 
         self.save_lbl = QLabel("")
-        self.save_lbl.setStyleSheet(f"color:{C_GREEN};font-size:11px;background:transparent;")
+        self.save_lbl.setStyleSheet(f"color:{C_GREEN};font-size:12px;background:transparent;")
         al.addWidget(self.save_lbl); root.addWidget(ac)
 
         cs, csl = make_card("Current Status")
@@ -6183,7 +6197,7 @@ class ActionsPage(QWidget):
             "Config: ~/.config/legion-toolkit/actions.json"
         )
         note.setWordWrap(True)
-        note.setStyleSheet(f"color:{C_TEXT2};font-size:11px;background:transparent;")
+        note.setStyleSheet(f"color:{C_TEXT2};font-size:12px;background:transparent;")
         nl.addWidget(note); root.addWidget(nc)
         root.addStretch()
 
@@ -6311,10 +6325,7 @@ class AboutPage(QWidget):
         except: pass
         driver_str = " + ".join(drivers) if drivers else "ideapad_acpi"
 
-        info_grid = QGridLayout()
-        info_grid.setSpacing(8)
-        info_grid.setContentsMargins(0,8,0,0)
-        rows = [
+        info_rows = [
             ("Brand",   brand),
             ("Model",   model),
             ("CPU",     cpu_name),
@@ -6325,21 +6336,22 @@ class AboutPage(QWidget):
             ("Config",  "~/.config/legion-toolkit/"),
             ("GitHub",  "github.com/v4cachy/legion-linux-toolkit"),
         ]
-        for i, (label, value) in enumerate(rows):
+        for label, value in info_rows:
+            row = QWidget()
+            row.setStyleSheet("background:transparent;")
+            row.setFixedHeight(32)
+            rl = QHBoxLayout(row)
+            rl.setContentsMargins(0, 2, 0, 2)
+            rl.setSpacing(16)
             lbl = QLabel(label)
             lbl.setStyleSheet(f"color:{C_TEXT2};font-size:12px;font-weight:500;background:transparent;")
+            lbl.setFixedWidth(80)
             val = QLabel(value)
             val.setStyleSheet(f"color:{C_TEXT};font-size:12px;font-weight:500;background:transparent;")
             val.setWordWrap(True)
-            info_grid.addWidget(lbl, i, 0)
-            info_grid.addWidget(val, i, 1)
-        info_grid.setColumnStretch(0, 0)
-        info_grid.setColumnMinimumWidth(0, 80)
-        info_grid.setColumnStretch(1, 1)
-
-        lay.addWidget(QLabel("System Information"))
-        lay.addWidget(QWidget())
-        lay.addLayout(info_grid)
+            rl.addWidget(lbl)
+            rl.addWidget(val, 1)
+            lay.addWidget(row)
 
         root.addWidget(card); root.addStretch()
 
@@ -6557,7 +6569,7 @@ class LegionDashboard(QMainWindow):
         label = PROFILE_LABELS.get(profile, profile)
         self.badge.setText(label)
         self.badge.setStyleSheet(
-            f"color:{color};font-size:10px;font-weight:bold;letter-spacing:1px;"
+            f"color:{color};font-size:10px;font-weight:600;letter-spacing:1px;"
             f"padding:4px 12px;border:1px solid {color};border-radius:10px;"
         )
 
@@ -6569,7 +6581,7 @@ class LegionDashboard(QMainWindow):
         ac = d["ac"]
         self.ac_ind.setText("⚡ AC" if ac else "🔋 Battery")
         self.ac_ind.setStyleSheet(
-            f"color:{C_GREEN if ac else C_ORANGE};font-size:11px;margin-left:12px;"
+            f"color:{C_GREEN if ac else C_ORANGE};font-size:12px;margin-left:12px;"
         )
         # Feed currently visible page if it can accept sampler data
         idx = self.stack.currentIndex()
