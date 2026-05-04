@@ -12,6 +12,30 @@ info() { echo -e "  ${CYAN}→${NC}  $*"; }
 warn() { echo -e "  ${YELLOW}⚠${NC}  $*"; }
 err()  { echo -e "  ${RED}✗${NC}  $*"; exit 1; }
 
+# ── Progress Bar ───────────────────────────────────────────────────────────────
+BAR_WIDTH=40
+TOTAL_STEPS=6
+CURRENT_STEP=0
+
+progress() {
+    local label="$1"
+    CURRENT_STEP=$((CURRENT_STEP + 1))
+    local pct=$(( (CURRENT_STEP * 100) / TOTAL_STEPS ))
+    local filled=$(( (CURRENT_STEP * BAR_WIDTH) / TOTAL_STEPS ))
+    local empty=$(( BAR_WIDTH - filled ))
+
+    local bar="["
+    for ((i=0; i<filled; i++)); do bar+="█"; done
+    for ((i=0; i<empty; i++)); do bar+="░"; done
+    bar+="]"
+
+    printf "\r  ${CYAN}%s${NC}  %3d%% %s  " "$bar" "$pct" "$label"
+}
+
+progress_done() {
+    echo ""
+}
+
 [[ $EUID -ne 0 ]] && exec sudo bash "$0" "$@"
 
 REPO_URL="https://github.com/v4cachy/legion-linux-toolkit"
@@ -25,7 +49,7 @@ echo -e   "╚══════════════════════
 echo -e "  Repo: ${CYAN}${REPO_URL}${NC}\n"
 
 # ── 1. Pull from GitHub ───────────────────────────────────────────────────────
-echo -e "${BOLD}[1/4] Pulling latest from GitHub…${NC}"
+progress "Fetching latest from GitHub…"
 command -v git &>/dev/null || err "git not found — sudo pacman -S git"
 
 SOURCE_CHANGED=false
@@ -48,7 +72,6 @@ if [[ -d "$SCRIPT_DIR/.git" ]]; then
         git log --oneline "${BEFORE}..${AFTER}" 2>/dev/null | while IFS= read -r line; do
             echo -e "     ${GREEN}•${NC}  $line"
         done
-        # Track which files changed
         CHANGED_FILES=$(git diff --name-only "${BEFORE}..${AFTER}" 2>/dev/null || echo "")
         if echo "$CHANGED_FILES" | grep -qE \
             "tray/legion-gui\.py|tray/legion-tray\.py|daemon/legion-daemon\.py|scripts/legion-ctl|udev/|systemd/"; then
@@ -67,14 +90,14 @@ else
 fi
 
 # ── 2. Stop running instances ─────────────────────────────────────────────────
-echo -e "${BOLD}[2/4] Stopping running instances…${NC}"
+progress "Stopping running instances…"
 pkill -f "legion-tray"   2>/dev/null && info "Stopped tray"   || true
 pkill -f "legion-gui"    2>/dev/null && info "Stopped gui"    || true
 systemctl stop legion-toolkit.service 2>/dev/null && info "Stopped daemon" || true
 sleep 0.5
 
 # ── 3. Install updated files ──────────────────────────────────────────────────
-echo -e "${BOLD}[3/4] Installing updated files…${NC}"
+progress "Installing updated files…"
 
 install_file() {
     local src="$1" dst="$2" mode="${3:-644}"
@@ -89,7 +112,7 @@ install_file() {
 
 mkdir -p /usr/lib/legion-toolkit
 
-# Core toolkit files — always reinstall all on update
+# Core toolkit files
 install_file "$SCRIPT_DIR/daemon/legion-daemon.py"        /usr/lib/legion-toolkit/legion-daemon.py    755
 install_file "$SCRIPT_DIR/udev/udev-trigger.sh"           /usr/lib/legion-toolkit/udev-trigger.sh     755
 install_file "$SCRIPT_DIR/tray/legion-gui.py"             /usr/lib/legion-toolkit/legion-gui.py       755
@@ -97,11 +120,10 @@ install_file "$SCRIPT_DIR/tray/legion-tray.py"            /usr/lib/legion-toolki
 install_file "$SCRIPT_DIR/tray/org.legion-toolkit.policy" /usr/share/polkit-1/actions/org.legion-toolkit.policy 644
 install_file "$SCRIPT_DIR/systemd/legion-toolkit.service" /etc/systemd/system/legion-toolkit.service  644
 
-# CLI — always reinstall
+# CLI
 if [[ -f "$SCRIPT_DIR/scripts/legion-ctl" ]]; then
     install_file "$SCRIPT_DIR/scripts/legion-ctl" /usr/local/bin/legion-ctl 755
 else
-    # Regenerate minimal CLI wrapper if script is missing
     printf '#!/usr/bin/env bash\nexec /usr/lib/legion-toolkit/legion-daemon.py "$@"\n' \
         > /usr/local/bin/legion-ctl && chmod 755 /usr/local/bin/legion-ctl
     ok "legion-ctl (regenerated) → /usr/local/bin/legion-ctl"
@@ -114,7 +136,7 @@ if [[ -f "$SCRIPT_DIR/udev/99-legion-toolkit.rules" ]]; then
     ok "udev rules reloaded"
 fi
 
-# Autostart desktop entry — runs as user directly, no sudo
+# Autostart desktop entry
 cat > /etc/xdg/autostart/legion-toolkit.desktop << 'EOF'
 [Desktop Entry]
 Type=Application
@@ -128,10 +150,9 @@ EOF
 ok "Autostart entry updated"
 
 # ── 4. Restart services ───────────────────────────────────────────────────────
-echo -e "${BOLD}[4/4] Restarting services…${NC}"
+progress "Restarting services…"
 systemctl daemon-reload
 
-# Enable service if not already enabled
 if ! systemctl is-enabled --quiet legion-toolkit.service 2>/dev/null; then
     systemctl enable legion-toolkit.service && ok "Service enabled"
 fi
@@ -153,6 +174,8 @@ if [[ -n "$REAL_USER" ]]; then
         && ok "Tray started (user: $REAL_USER)" \
         || warn "Tray may not have started — cat /tmp/legion-tray.log"
 fi
+
+progress_done
 
 echo -e "\n${GREEN}${BOLD}✓ Update complete!${NC}"
 VER=$(cd "$SCRIPT_DIR" 2>/dev/null \

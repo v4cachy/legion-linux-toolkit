@@ -12,6 +12,31 @@ info() { echo -e "  ${CYAN}→${NC}  $*"; }
 warn() { echo -e "  ${YELLOW}⚠${NC}  $*"; }
 err()  { echo -e "  ${RED}✗${NC}  $*"; exit 1; }
 
+# ── Progress Bar ───────────────────────────────────────────────────────────────
+BAR_WIDTH=40
+TOTAL_STEPS=8
+CURRENT_STEP=0
+
+progress() {
+    local label="$1"
+    CURRENT_STEP=$((CURRENT_STEP + 1))
+    local pct=$(( (CURRENT_STEP * 100) / TOTAL_STEPS ))
+    local filled=$(( (CURRENT_STEP * BAR_WIDTH) / TOTAL_STEPS ))
+    local empty=$(( BAR_WIDTH - filled ))
+
+    # Build bar string
+    local bar="["
+    for ((i=0; i<filled; i++)); do bar+="█"; done
+    for ((i=0; i<empty; i++)); do bar+="░"; done
+    bar+="]"
+
+    printf "\r  ${CYAN}%s${NC}  %3d%% %s  " "$bar" "$pct" "$label"
+}
+
+progress_done() {
+    echo "" # Move to next line after final progress
+}
+
 [[ $EUID -ne 0 ]] && err "Run as root: sudo bash install.sh"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -46,7 +71,7 @@ fi
 echo -e "  ${CYAN}Detected:${NC}  $BRAND — $(cat /sys/class/dmi/id/product_name 2>/dev/null || echo 'Unknown')\n"
 
 # ── 1. Core dependencies ──────────────────────────────────────────────────────
-echo -e "${BOLD}[1/8] Checking core dependencies…${NC}"
+progress "Checking core dependencies…"
 MISSING_PACMAN=()
 python3 -c "import PyQt6" 2>/dev/null      || MISSING_PACMAN+=("python-pyqt6")
 command -v notify-send &>/dev/null         || MISSING_PACMAN+=("libnotify")
@@ -57,7 +82,7 @@ command -v git &>/dev/null                || MISSING_PACMAN+=("git")
 ok "Core packages ready"
 
 # ── 2. Brand-specific optional packages ──────────────────────────────────────
-echo -e "\n${BOLD}[2/8] Installing optional packages for $BRAND…${NC}"
+progress "Installing optional packages for $BRAND…"
 if [[ "$BRAND" == "Legion" || "$BRAND" == "LOQ" ]]; then
     if ! lsmod 2>/dev/null | grep -q "lenovo_legion"; then
         pacman -S --noconfirm --needed lenovolegionlinux lenovolegionlinux-dkms 2>/dev/null \
@@ -82,7 +107,6 @@ if [[ "$BRAND" == "Legion" || "$BRAND" == "LOQ" ]]; then
     else
         ok "envycontrol already installed"
     fi
-    # Symlink to /usr/local/bin so daemon (root) can always find it
     ENV_BIN=$(command -v envycontrol 2>/dev/null || true)
     if [[ -n "$ENV_BIN" && ! -f "/usr/local/bin/envycontrol" ]]; then
         ln -sf "$ENV_BIN" /usr/local/bin/envycontrol
@@ -99,9 +123,9 @@ if [[ "$BRAND" == "Yoga" ]]; then
 fi
 
 # ── 3. Hardware detection ─────────────────────────────────────────────────────
-echo -e "\n${BOLD}[3/8] Hardware detection…${NC}"
+progress "Scanning hardware features…"
 chk() { [[ -e "$2" ]] && echo -e "     ${GREEN}✓${NC}  $1" || echo -e "     ${YELLOW}-${NC}  $1 (not found)"; }
-chk "platform_profile"  "/sys/firmware/acpi/platform_profile"
+chk "powermode"         "$(find /sys/devices -name 'powermode' -path '*/PNP0C09*' 2>/dev/null | head -1)"
 chk "ideapad_acpi"      "/sys/bus/platform/drivers/ideapad_acpi/VPC2004:00"
 chk "kbd_backlight"     "/sys/class/leds/platform::kbd_backlight/brightness"
 BL=$(ls /sys/class/backlight/*/brightness 2>/dev/null | head -1 || true)
@@ -109,21 +133,21 @@ BL=$(ls /sys/class/backlight/*/brightness 2>/dev/null | head -1 || true)
                || echo -e "     ${YELLOW}-${NC}  backlight not found"
 
 # ── 4. Stop any existing instances ───────────────────────────────────────────
-echo -e "\n${BOLD}[4/8] Stopping existing instances…${NC}"
+progress "Stopping existing instances…"
 pkill -f "legion-tray"   2>/dev/null && info "Stopped tray"   || true
 pkill -f "legion-gui"    2>/dev/null && info "Stopped gui"    || true
 systemctl stop legion-toolkit.service 2>/dev/null && info "Stopped daemon" || true
 sleep 0.5
 
 # ── 5. Install daemon ─────────────────────────────────────────────────────────
-echo -e "${BOLD}[5/8] Installing daemon…${NC}"
+progress "Installing daemon…"
 mkdir -p /usr/lib/legion-toolkit
 install -m 755 "$SCRIPT_DIR/daemon/legion-daemon.py" /usr/lib/legion-toolkit/legion-daemon.py
 install -m 755 "$SCRIPT_DIR/udev/udev-trigger.sh"    /usr/lib/legion-toolkit/udev-trigger.sh
 ok "Daemon installed"
 
 # ── 6. Install CLI ────────────────────────────────────────────────────────────
-echo -e "${BOLD}[6/8] Installing CLI…${NC}"
+progress "Installing CLI…"
 if [[ -f "$SCRIPT_DIR/scripts/legion-ctl" ]]; then
     install -m 755 "$SCRIPT_DIR/scripts/legion-ctl" /usr/local/bin/legion-ctl
 else
@@ -133,7 +157,7 @@ fi
 ok "CLI installed → /usr/local/bin/legion-ctl"
 
 # ── 7. Install GUI + tray ─────────────────────────────────────────────────────
-echo -e "${BOLD}[7/8] Installing GUI and tray…${NC}"
+progress "Installing GUI and tray…"
 install -m 755 "$SCRIPT_DIR/tray/legion-gui.py"  /usr/lib/legion-toolkit/legion-gui.py
 install -m 755 "$SCRIPT_DIR/tray/legion-tray.py" /usr/lib/legion-toolkit/legion-tray.py
 install -m 644 "$SCRIPT_DIR/tray/kernel_check.py" /usr/lib/legion-toolkit/kernel_check.py
@@ -158,7 +182,7 @@ EOF
 ok "Autostart configured"
 
 # ── 8. udev + systemd ─────────────────────────────────────────────────────────
-echo -e "${BOLD}[8/8] Installing udev rules and service…${NC}"
+progress "Configuring udev rules and service…"
 install -m 644 "$SCRIPT_DIR/udev/99-legion-toolkit.rules" /etc/udev/rules.d/
 udevadm control --reload-rules && udevadm trigger
 ok "udev rules installed"
@@ -169,6 +193,8 @@ systemctl daemon-reload
 systemctl enable --now legion-toolkit.service
 touch /var/log/legion-toolkit.log && chmod 644 /var/log/legion-toolkit.log
 ok "Service enabled and started"
+
+progress_done
 
 # ── Verify + launch ───────────────────────────────────────────────────────────
 echo -e "\n${BOLD}Verifying and launching…${NC}"
