@@ -844,29 +844,62 @@ EPP_LABELS = {"default":"Default","performance":"Performance",
 
 _THEMES = {
     "dark": {
-        "C_BG":     "#1a1a1a",
-        "C_SIDEBAR":"#141414",
-        "C_CARD":   "#242424",
-        "C_CARD2":  "#2c2c2c",
-        "C_BORDER": "#333333",
-        "C_TEXT":   "#e0e0e0",
-        "C_TEXT2":  "#888888",
-        "C_TEXT3":  "#555555",
+        "C_BG":      "#0d0d0d",
+        "C_SIDEBAR": "#111111",
+        "C_CARD":    "#181818",
+        "C_CARD2":   "#222222",
+        "C_BORDER":  "#2a2a2a",
+        "C_TEXT":    "#e5e5e5",
+        "C_TEXT2":   "#999999",
+        "C_TEXT3":   "#666666",
+        "C_HOVER":   "#1a1a1a",
+        "C_ACTIVE":  "#252525",
+        "C_SHADOW":  "#000000",
+    },
+    "dark_dimmed": {
+        "C_BG":      "#151515",
+        "C_SIDEBAR": "#1a1a1a",
+        "C_CARD":    "#1e1e1e",
+        "C_CARD2":   "#262626",
+        "C_BORDER":  "#333333",
+        "C_TEXT":    "#e0e0e0",
+        "C_TEXT2":   "#999999",
+        "C_TEXT3":   "#666666",
+        "C_HOVER":   "#222222",
+        "C_ACTIVE":  "#2d2d2d",
+        "C_SHADOW":  "#000000",
+    },
+    "oled_black": {
+        "C_BG":      "#000000",
+        "C_SIDEBAR": "#050505",
+        "C_CARD":    "#0a0a0a",
+        "C_CARD2":   "#111111",
+        "C_BORDER":  "#1a1a1a",
+        "C_TEXT":    "#e0e0e0",
+        "C_TEXT2":   "#888888",
+        "C_TEXT3":   "#555555",
+        "C_HOVER":   "#0f0f0f",
+        "C_ACTIVE":  "#151515",
+        "C_SHADOW":  "#000000",
     },
     "light": {
-        "C_BG":     "#f4f4f4",
-        "C_SIDEBAR":"#e4e4e4",
-        "C_CARD":   "#ffffff",
-        "C_CARD2":  "#ebebeb",
-        "C_BORDER": "#cccccc",
-        "C_TEXT":   "#1a1a1a",
-        "C_TEXT2":  "#555555",
-        "C_TEXT3":  "#999999",
+        "C_BG":      "#f5f5f5",
+        "C_SIDEBAR": "#eaeaea",
+        "C_CARD":    "#ffffff",
+        "C_CARD2":   "#f0f0f0",
+        "C_BORDER":  "#e0e0e0",
+        "C_TEXT":    "#1a1a1a",
+        "C_TEXT2":   "#666666",
+        "C_TEXT3":   "#999999",
+        "C_HOVER":   "#eeeeee",
+        "C_ACTIVE":  "#e5e5e5",
+        "C_SHADOW":  "#cccccc",
     },
 }
 
 def _load_theme_colours():
     global C_BG, C_SIDEBAR, C_CARD, C_CARD2, C_BORDER, C_TEXT, C_TEXT2, C_TEXT3
+    global C_HOVER, C_ACTIVE, C_SHADOW
     try:
         cfg = json.loads(APP_CFG.read_text()) if APP_CFG.exists() else {}
         t = _THEMES.get(cfg.get("theme","dark"), _THEMES["dark"])
@@ -880,6 +913,9 @@ def _load_theme_colours():
     C_TEXT   = t["C_TEXT"]
     C_TEXT2  = t["C_TEXT2"]
     C_TEXT3  = t["C_TEXT3"]
+    C_HOVER  = t["C_HOVER"]
+    C_ACTIVE = t["C_ACTIVE"]
+    C_SHADOW = t["C_SHADOW"]
 
 _load_theme_colours()
 
@@ -2477,20 +2513,20 @@ class StatRow(QWidget):
     def __init__(self, label, value_str="—", pct=0,
                  lbl_w=110, val_w=110, color=None, parent=None):
         super().__init__(parent)
-        self.setFixedHeight(24)
+        self.setFixedHeight(26)
         self.setStyleSheet("background:transparent;")
         lay = QHBoxLayout(self)
         lay.setContentsMargins(0, 0, 0, 0); lay.setSpacing(10)
         self._lbl = QLabel(label)
         self._lbl.setFixedWidth(lbl_w)
-        self._lbl.setStyleSheet(f"color:{C_TEXT2};font-size:11px;")
+        self._lbl.setStyleSheet(f"color:{C_TEXT2};font-size:12px;font-weight:500;")
         lay.addWidget(self._lbl)
         self._bar = BarFill(pct, color)
         lay.addWidget(self._bar)
         self._val = QLabel(value_str)
         self._val.setFixedWidth(val_w)
         self._val.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-        self._val.setStyleSheet(f"color:{C_TEXT};font-size:11px;font-weight:500;")
+        self._val.setStyleSheet(f"color:{C_TEXT};font-size:12px;font-weight:600;")
         lay.addWidget(self._val)
 
     def update_value(self, value_str, pct, color=None):
@@ -2506,13 +2542,13 @@ class StatRow(QWidget):
 class InfoRow(QWidget):
     def __init__(self, label, value="—", lbl_w=180, parent=None):
         super().__init__(parent)
-        self.setFixedHeight(36)
+        self.setFixedHeight(40)
         self.setStyleSheet("background:transparent;")
-        lay = QHBoxLayout(self); lay.setContentsMargins(0,0,0,0)
+        lay = QHBoxLayout(self); lay.setContentsMargins(0,4,0,4)
         lbl = QLabel(label); lbl.setFixedWidth(lbl_w)
-        lbl.setStyleSheet(f"color:{C_TEXT2};font-size:12px;")
+        lbl.setStyleSheet(f"color:{C_TEXT2};font-size:12px;font-weight:500;")
         self._val = QLabel(value)
-        self._val.setStyleSheet(f"color:{C_TEXT};font-size:12px;")
+        self._val.setStyleSheet(f"color:{C_TEXT};font-size:12px;font-weight:500;")
         lay.addWidget(lbl); lay.addWidget(self._val); lay.addStretch()
     def set_value(self, v): self._val.setText(v)
 
@@ -2539,15 +2575,15 @@ class FirstRunWizard(QDialog):
             QLabel  {{ color:{C_TEXT}; background:transparent; }}
             QPushButton {{
                 background:{C_CARD2}; color:{C_TEXT}; border:1px solid {C_BORDER};
-                border-radius:6px; padding:8px 20px; font-size:13px;
+                border-radius:8px; padding:10px 24px; font-size:13px;
             }}
             QPushButton:hover {{ background:{C_ACCENT}; color:#fff; border-color:{C_ACCENT}; }}
             QListWidget {{
                 background:{C_CARD}; border:1px solid {C_BORDER};
-                border-radius:8px; color:{C_TEXT}; font-size:13px;
+                border-radius:10px; color:{C_TEXT}; font-size:13px;
             }}
             QListWidget::item:selected {{
-                background:{C_ACCENT}; color:#fff; border-radius:4px;
+                background:{C_ACCENT}; color:#fff; border-radius:6px;
             }}
             QListWidget::item:hover {{ background:{C_CARD2}; }}
         """)
@@ -2839,12 +2875,12 @@ class ToggleSwitch(QWidget):
         self.path = path; self.on_change = on_change
         val = read_val if read_val is not None else (rdsys(path) if path else "0")
         self._checked = val == "1"
-        self._cx = 22.0 if self._checked else 4.0
-        self.setFixedSize(50, 28)
+        self._cx = 26.0 if self._checked else 6.0
+        self.setFixedSize(56, 32)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self._anim = QPropertyAnimation(self, b"cx", self)
-        self._anim.setDuration(150)
-        self._anim.setEasingCurve(QEasingCurve.Type.InOutCubic)
+        self._anim.setDuration(180)
+        self._anim.setEasingCurve(QEasingCurve.Type.OutCubic)
 
     @pyqtProperty(float)
     def cx(self): return self._cx
@@ -2857,7 +2893,7 @@ class ToggleSwitch(QWidget):
         self._checked = val
         self._anim.stop()
         self._anim.setStartValue(self._cx)
-        self._anim.setEndValue(22.0 if val else 4.0)
+        self._anim.setEndValue(26.0 if val else 6.0)
         self._anim.start(); self.update()
         if write and self.path:
             wrsys(self.path, "1" if val else "0")
@@ -2868,9 +2904,6 @@ class ToggleSwitch(QWidget):
             self.on_change(val)
 
     def mousePressEvent(self, e):
-        # Re-read the real sysfs state before toggling so the UI never gets
-        # out of sync with the actual hardware state (e.g. touchpad disabled
-        # via Fn key while the toggle showed enabled).
         if self.path and Path(self.path).exists():
             actual = rdsys(self.path, "0") == "1"
             self.setChecked(not actual)
@@ -2879,11 +2912,12 @@ class ToggleSwitch(QWidget):
 
     def paintEvent(self, e):
         p = QPainter(self); p.setRenderHint(QPainter.RenderHint.Antialiasing)
-        p.setBrush(QBrush(QColor(C_ACCENT if self._checked else C_BORDER)))
+        bg_color = C_ACCENT if self._checked else C_TEXT3
+        p.setBrush(QBrush(QColor(bg_color)))
         p.setPen(Qt.PenStyle.NoPen)
-        p.drawRoundedRect(0, 0, 50, 28, 14, 14)
+        p.drawRoundedRect(0, 0, 56, 32, 16, 16)
         p.setBrush(QBrush(QColor("#ffffff")))
-        p.drawEllipse(int(self._cx), 4, 20, 20); p.end()
+        p.drawEllipse(int(self._cx), 6, 20, 20); p.end()
 
 
 class NotifyToggle(QWidget):
@@ -2892,16 +2926,16 @@ class NotifyToggle(QWidget):
                  notif_title=None, notif_on="Enabled", notif_off="Disabled",
                  on_change=None, read_val=None, parent=None):
         super().__init__(parent)
-        self.setStyleSheet("background:transparent;"); self.setFixedHeight(60)
+        self.setStyleSheet("background:transparent;"); self.setFixedHeight(56)
         self._notif_title = notif_title or title
         self._notif_on    = notif_on
         self._notif_off   = notif_off
-        lay = QHBoxLayout(self); lay.setContentsMargins(0,0,0,0)
-        col = QVBoxLayout(); col.setSpacing(2)
+        lay = QHBoxLayout(self); lay.setContentsMargins(0,4,0,4)
+        col = QVBoxLayout(); col.setSpacing(3)
         t = QLabel(title)
-        t.setStyleSheet(f"color:{C_TEXT};font-size:13px;font-weight:bold;background:transparent;")
+        t.setStyleSheet(f"color:{C_TEXT};font-size:13px;font-weight:500;background:transparent;border:none;")
         d = QLabel(desc)
-        d.setStyleSheet(f"color:{C_TEXT2};font-size:11px;background:transparent;")
+        d.setStyleSheet(f"color:{C_TEXT2};font-size:11px;background:transparent;border:none;")
         d.setWordWrap(True)
         col.addWidget(t); col.addWidget(d)
         lay.addLayout(col); lay.addStretch()
@@ -2943,42 +2977,43 @@ def make_div():
 
 def make_card(title=""):
     card = QWidget()
-    card.setStyleSheet(f"background:{C_CARD};border-radius:8px;")
+    card.setStyleSheet(f"background:{C_CARD};border-radius:12px;border:1px solid {C_BORDER};")
     card.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
-    lay = QVBoxLayout(card); lay.setContentsMargins(16,12,16,12); lay.setSpacing(8)
+    lay = QVBoxLayout(card); lay.setContentsMargins(20,16,20,16); lay.setSpacing(10)
     if title:
         t = QLabel(title)
-        t.setStyleSheet(f"color:{C_TEXT};font-size:14px;font-weight:bold;background:transparent;")
+        t.setStyleSheet(f"color:{C_TEXT};font-size:14px;font-weight:600;background:transparent;border:none;")
         lay.addWidget(t)
     return card, lay
 
 def sec_title(text):
     l = QLabel(text)
-    l.setStyleSheet(f"color:{C_TEXT};font-size:13px;font-weight:bold;background:transparent;")
+    l.setStyleSheet(f"color:{C_TEXT};font-size:14px;font-weight:600;background:transparent;border:none;")
     return l
 
 def combo_style():
     return (f"QComboBox{{background:{C_CARD2};color:{C_TEXT};border:1px solid {C_BORDER};"
-            f"border-radius:6px;padding:6px 12px;font-size:12px;min-width:180px;}}"
-            f"QComboBox::drop-down{{border:none;width:20px;}}"
+            f"border-radius:8px;padding:8px 14px;font-size:13px;min-width:180px;}}"
+            f"QComboBox::drop-down{{border:none;width:24px;}}"
             f"QComboBox QAbstractItemView{{background:{C_CARD2};color:{C_TEXT};"
-            f"border:1px solid {C_BORDER};selection-background-color:{C_ACCENT};}}")
+            f"border:1px solid {C_BORDER};selection-background-color:{C_ACCENT};selection-color:#fff;"
+            f"padding:4px;}}")
 
 
 class StatusBadge(QWidget):
     def __init__(self, title, value="—", color=C_TEXT3, tooltip="", parent=None):
         super().__init__(parent)
-        self.setMinimumWidth(80)
-        self.setFixedHeight(54)
+        self.setMinimumWidth(90)
+        self.setFixedHeight(60)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.setStyleSheet(
-            f"QWidget{{background:{C_CARD2};border-radius:6px;border:1px solid {C_BORDER};}}"
+            f"QWidget{{background:{C_CARD2};border-radius:10px;border:1px solid {C_BORDER};}}"
         )
-        lay = QVBoxLayout(self); lay.setContentsMargins(8,6,8,6); lay.setSpacing(1)
+        lay = QVBoxLayout(self); lay.setContentsMargins(10,8,10,8); lay.setSpacing(2)
         self._t = QLabel(title)
-        self._t.setStyleSheet(f"color:{C_TEXT2};font-size:9px;background:transparent;border:none;")
+        self._t.setStyleSheet(f"color:{C_TEXT2};font-size:10px;background:transparent;border:none;font-weight:500;")
         self._v = QLabel(value)
-        self._v.setStyleSheet(f"color:{color};font-size:11px;font-weight:bold;background:transparent;border:none;")
+        self._v.setStyleSheet(f"color:{color};font-size:13px;font-weight:700;background:transparent;border:none;")
         self._v.setWordWrap(False)
         self._v.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         lay.addWidget(self._t); lay.addWidget(self._v)
@@ -3085,29 +3120,44 @@ class ProfileBtn(QPushButton):
 class SidebarBtn(QPushButton):
     def __init__(self, icon_char, label, parent=None):
         super().__init__(parent); self.setCheckable(True)
-        self.setFixedSize(92, 64)
+        self.setFixedSize(204, 44)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.icon_char = icon_char; self.label = label
-        self.setStyleSheet("border:none;background:transparent;")
 
-    def paintEvent(self, e):
-        p = QPainter(self); p.setRenderHint(QPainter.RenderHint.Antialiasing)
-        w, h = self.width(), self.height()
-        if self.isChecked():
-            p.setBrush(QBrush(QColor(C_CARD))); p.setPen(Qt.PenStyle.NoPen)
-            p.drawRoundedRect(4, 2, w-8, h-4, 8, 8)
-            p.setBrush(QBrush(QColor(C_ACCENT)))
-            p.drawRoundedRect(0, h//2-18, 3, 36, 2, 2)
-        # icon
-        p.setPen(QColor(C_TEXT) if self.isChecked() else QColor(C_TEXT3))
-        p.setFont(QFont("sans-serif", 16))
-        p.drawText(0, 2, w, 38, Qt.AlignmentFlag.AlignCenter, self.icon_char)
-        # label
-        p.setPen(QColor(C_TEXT) if self.isChecked() else QColor(C_TEXT2))
-        f = QFont("Sans Serif", 8); f.setWeight(QFont.Weight.Medium if self.isChecked() else QFont.Weight.Normal)
-        p.setFont(f)
-        p.drawText(0, 38, w, 22, Qt.AlignmentFlag.AlignCenter, self.label)
-        p.end()
+        self.setLayout(QHBoxLayout())
+        self.layout().setContentsMargins(16, 0, 16, 0)
+        self.layout().setSpacing(12)
+        self.layout().setAlignment(Qt.AlignmentFlag.AlignLeft)
+
+        self._icon_lbl = QLabel(icon_char)
+        self._icon_lbl.setStyleSheet(f"font-size:18px;background:transparent;")
+        self._icon_lbl.setFixedSize(20, 20)
+        self._icon_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self._text_lbl = QLabel(label)
+        self._text_lbl.setStyleSheet(f"font-size:13px;background:transparent;font-weight:500;")
+
+        self.layout().addWidget(self._icon_lbl)
+        self.layout().addWidget(self._text_lbl)
+        self.layout().addStretch()
+
+        self.toggled.connect(self._update_style)
+        self._update_style(self.isChecked())
+
+    def _update_style(self, checked):
+        if checked:
+            bg = C_ACTIVE; fg = C_ACCENT; tw = 600
+            il_color = C_ACCENT; tl_color = C_ACCENT
+        else:
+            bg = "transparent"; fg = C_TEXT2; tw = 500
+            il_color = C_TEXT3; tl_color = C_TEXT2
+        self.setStyleSheet(
+            f"QPushButton{{background:{bg};border:none;color:{fg};"
+            f"border-radius:8px;}}"
+            f"QPushButton:hover{{background:{C_HOVER};}}"
+        )
+        self._icon_lbl.setStyleSheet(f"color:{il_color};font-size:18px;background:transparent;")
+        self._text_lbl.setStyleSheet(f"color:{tl_color};font-size:13px;background:transparent;font-weight:{tw};")
 
 
 def scrollable(widget_factory):
@@ -3119,7 +3169,7 @@ def scrollable(widget_factory):
     scroll.setStyleSheet("border:none;background:transparent;")
     scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
     inner = QWidget(); inner.setStyleSheet(f"background:{C_BG};")
-    root = QVBoxLayout(inner); root.setContentsMargins(16,16,16,16); root.setSpacing(10)
+    root = QVBoxLayout(inner); root.setContentsMargins(24,24,24,24); root.setSpacing(12)
     lay = QVBoxLayout(outer); lay.setContentsMargins(0,0,0,0); lay.addWidget(scroll)
     scroll.setWidget(inner)
     widget_factory(root)
@@ -3141,27 +3191,27 @@ class HomePage(QWidget):
         scroll.setStyleSheet("border:none;background:transparent;")
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         inner = QWidget(); inner.setStyleSheet(f"background:{C_BG};")
-        root = QVBoxLayout(inner); root.setContentsMargins(16,16,16,16); root.setSpacing(10)
+        root = QVBoxLayout(inner); root.setContentsMargins(24,24,24,24); root.setSpacing(12)
         root.setAlignment(Qt.AlignmentFlag.AlignTop)
         lay = QVBoxLayout(self); lay.setContentsMargins(0,0,0,0); lay.addWidget(scroll)
         scroll.setWidget(inner)
 
         # ── Hardware Monitor Card ─────────────────────────────────────────
-        hw = QWidget(); hw.setStyleSheet(f"background:{C_CARD};border-radius:8px;")
+        hw = QWidget(); hw.setStyleSheet(f"background:{C_CARD};border-radius:12px;border:1px solid {C_BORDER};")
         hw.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
         hw_outer = QHBoxLayout(hw); hw_outer.setContentsMargins(0,0,0,0); hw_outer.setSpacing(0)
 
         def hw_col(stretch=1):
             w = QWidget(); w.setStyleSheet("background:transparent;")
             w.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
-            l = QVBoxLayout(w); l.setContentsMargins(14,12,14,12); l.setSpacing(0)
+            l = QVBoxLayout(w); l.setContentsMargins(16,14,16,14); l.setSpacing(2)
             l.setAlignment(Qt.AlignmentFlag.AlignTop)
             return w, l
 
         def col_hdr(text, badge_widget=None):
-            row = QHBoxLayout(); row.setSpacing(8); row.setContentsMargins(0,0,0,8)
+            row = QHBoxLayout(); row.setSpacing(8); row.setContentsMargins(0,0,0,10)
             lbl = QLabel(text)
-            lbl.setStyleSheet(f"color:{C_TEXT};font-size:12px;font-weight:bold;background:transparent;")
+            lbl.setStyleSheet(f"color:{C_TEXT};font-size:13px;font-weight:600;background:transparent;")
             row.addWidget(lbl)
             if badge_widget: row.addWidget(badge_widget)
             row.addStretch()
@@ -3236,15 +3286,15 @@ class HomePage(QWidget):
         def _setting_row(icon_text, title, desc, control_widget):
             """LLT-style row: icon | title+desc | control"""
             row_w = QWidget(); row_w.setStyleSheet("background:transparent;")
-            row_w.setMinimumHeight(64)
-            rl = QHBoxLayout(row_w); rl.setContentsMargins(0,4,0,4); rl.setSpacing(12)
+            row_w.setMinimumHeight(60)
+            rl = QHBoxLayout(row_w); rl.setContentsMargins(0,6,0,6); rl.setSpacing(14)
             icon = QLabel(icon_text)
             icon.setFixedWidth(32)
             icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
             icon.setStyleSheet("font-size:18px;background:transparent;")
-            txt = QVBoxLayout(); txt.setSpacing(2)
+            txt = QVBoxLayout(); txt.setSpacing(3)
             t = QLabel(title)
-            t.setStyleSheet(f"color:{C_TEXT};font-size:13px;font-weight:bold;background:transparent;")
+            t.setStyleSheet(f"color:{C_TEXT};font-size:13px;font-weight:500;background:transparent;")
             d = QLabel(desc); d.setWordWrap(True)
             d.setStyleSheet(f"color:{C_TEXT2};font-size:11px;background:transparent;")
             txt.addWidget(t); txt.addWidget(d)
@@ -3562,7 +3612,7 @@ class BatteryPage(QWidget):
         scroll.setStyleSheet("border:none;background:transparent;")
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         inner = QWidget(); inner.setStyleSheet(f"background:{C_BG};")
-        root = QVBoxLayout(inner); root.setContentsMargins(16,16,16,16); root.setSpacing(10)
+        root = QVBoxLayout(inner); root.setContentsMargins(24,24,24,24); root.setSpacing(12)
         lay = QVBoxLayout(self); lay.setContentsMargins(0,0,0,0); lay.addWidget(scroll)
         scroll.setWidget(inner)
 
@@ -3570,11 +3620,11 @@ class BatteryPage(QWidget):
         top = QHBoxLayout(); top.setSpacing(24)
         left = QVBoxLayout(); left.setSpacing(4)
         self.pct_lbl    = QLabel("—%")
-        self.pct_lbl.setStyleSheet(f"color:{C_TEXT};font-size:40px;font-weight:bold;background:transparent;")
+        self.pct_lbl.setStyleSheet(f"color:{C_TEXT};font-size:42px;font-weight:700;background:transparent;")
         self.status_lbl = QLabel("Status: —")
-        self.status_lbl.setStyleSheet(f"color:{C_TEXT2};font-size:12px;background:transparent;")
+        self.status_lbl.setStyleSheet(f"color:{C_TEXT2};font-size:12px;font-weight:500;background:transparent;")
         self.health_lbl = QLabel("Health: —")
-        self.health_lbl.setStyleSheet(f"color:{C_TEXT2};font-size:12px;background:transparent;")
+        self.health_lbl.setStyleSheet(f"color:{C_TEXT2};font-size:12px;font-weight:500;background:transparent;")
         left.addWidget(self.pct_lbl); left.addWidget(self.status_lbl)
         left.addWidget(self.health_lbl); left.addStretch()
         top.addLayout(left)
@@ -3793,14 +3843,14 @@ class PerformancePage(QWidget):
         scroll.setStyleSheet("border:none;background:transparent;")
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         inner = QWidget(); inner.setStyleSheet(f"background:{C_BG};")
-        root = QVBoxLayout(inner); root.setContentsMargins(16,16,16,16); root.setSpacing(10)
+        root = QVBoxLayout(inner); root.setContentsMargins(24,24,24,24); root.setSpacing(12)
         lay = QVBoxLayout(self); lay.setContentsMargins(0,0,0,0); lay.addWidget(scroll)
         scroll.setWidget(inner)
 
         # Boost — detect AMD or Intel
         bc, bl = make_card("CPU Boost")
         br = QHBoxLayout()
-        bt_col = QVBoxLayout(); bt_col.setSpacing(2)
+        bt_col = QVBoxLayout(); bt_col.setSpacing(3)
         _intel_boost = Path("/sys/devices/system/cpu/intel_pstate/no_turbo")
         _is_intel    = HW.get("cpu_vendor","amd") == "intel" if HW else False
         _boost_path  = _intel_boost if _is_intel and _intel_boost.exists() else AMD_BOOST
@@ -3809,27 +3859,27 @@ class PerformancePage(QWidget):
                         if _is_intel else
                         "Allows CPU to exceed base clock for short bursts. Auto-managed by power profile daemon.")
         bt = QLabel(_boost_label)
-        bt.setStyleSheet(f"color:{C_TEXT};font-size:13px;font-weight:bold;background:transparent;")
+        bt.setStyleSheet(f"color:{C_TEXT};font-size:13px;font-weight:500;background:transparent;")
         bd = QLabel(_boost_desc)
         bd.setStyleSheet(f"color:{C_TEXT2};font-size:11px;background:transparent;"); bd.setWordWrap(True)
         bt_col.addWidget(bt); bt_col.addWidget(bd)
         br.addLayout(bt_col); br.addStretch()
-        # Intel no_turbo: 0=turbo ON, 1=turbo OFF — inverted from AMD boost
         _boost_read = "1" if _is_intel and rdsys(_boost_path,"1") == "0" else rdsys(_boost_path,"0")
         self.boost_toggle = ToggleSwitch(_boost_path, read_val=_boost_read)
         br.addWidget(self.boost_toggle, alignment=Qt.AlignmentFlag.AlignVCenter)
         bl.addLayout(br); root.addWidget(bc)
 
         # EPP
-        ec, el = make_card("Energy Performance Preference (EPP)")
+        ec, el = make_card("Energy Performance Preference")
         edesc = QLabel("Controls CPU energy/performance tradeoff. Daemon sets this per profile automatically.")
         edesc.setWordWrap(True)
-        edesc.setStyleSheet(f"color:{C_TEXT2};font-size:11px;background:transparent;")
+        edesc.setStyleSheet(f"color:{C_TEXT2};font-size:12px;background:transparent;")
         el.addWidget(edesc)
         er = QHBoxLayout(); er.setSpacing(12)
-        lbl = QLabel("EPP Level:"); lbl.setStyleSheet(f"color:{C_TEXT};font-size:13px;background:transparent;")
+        lbl = QLabel("EPP Level"); lbl.setStyleSheet(f"color:{C_TEXT};font-size:13px;font-weight:500;background:transparent;")
         er.addWidget(lbl)
         self.epp_combo = QComboBox(); self.epp_combo.setStyleSheet(combo_style())
+        self.epp_combo.setFixedHeight(36)
         cur_epp = get_epp()
         for v in EPP_VALUES: self.epp_combo.addItem(EPP_LABELS[v], v)
         if cur_epp in EPP_VALUES: self.epp_combo.setCurrentIndex(EPP_VALUES.index(cur_epp))
@@ -3837,7 +3887,7 @@ class PerformancePage(QWidget):
         er.addWidget(self.epp_combo); er.addStretch()
         el.addLayout(er)
         self.epp_status = QLabel("")
-        self.epp_status.setStyleSheet(f"color:{C_GREEN};font-size:11px;background:transparent;")
+        self.epp_status.setStyleSheet(f"color:{C_GREEN};font-size:12px;font-weight:500;background:transparent;")
         el.addWidget(self.epp_status); root.addWidget(ec)
 
         # Fan & Thermal
@@ -4746,23 +4796,23 @@ class SystemPage(QWidget):
             yr_l.addWidget(self._rot_status)
             root.addWidget(yr_c)
 
-        # Appearance — Theme only
+        # Appearance — Theme
         ac, al = make_card("Appearance")
         th_row = QHBoxLayout(); th_row.setSpacing(12)
-        th_lbl = QLabel("Theme:")
-        th_lbl.setStyleSheet(f"color:{C_TEXT};font-size:13px;font-weight:bold;background:transparent;")
+        th_lbl = QLabel("Theme")
+        th_lbl.setStyleSheet(f"color:{C_TEXT};font-size:13px;font-weight:500;background:transparent;")
         th_row.addWidget(th_lbl)
         self.theme_combo = QComboBox()
         self.theme_combo.setStyleSheet(combo_style())
         self.theme_combo.setFixedHeight(36)
-        self.theme_combo.addItems(["Dark", "Light"])
+        self.theme_combo.addItems(["Dark", "Dark Dimmed", "OLED Black", "Light"])
         saved_theme = self._app_cfg.get("theme", "dark")
-        theme_idx = {"dark": 0, "light": 1}.get(saved_theme, 0)
+        theme_idx = {"dark": 0, "dark_dimmed": 1, "oled_black": 2, "light": 3}.get(saved_theme, 0)
         self.theme_combo.setCurrentIndex(theme_idx)
         self.theme_combo.currentIndexChanged.connect(self._on_theme)
         th_row.addWidget(self.theme_combo); th_row.addStretch()
         al.addLayout(th_row)
-        th_desc = QLabel("Changes the background tone. Applied immediately — no restart needed.")
+        th_desc = QLabel("Changes the application theme. Applied immediately.")
         th_desc.setStyleSheet(f"color:{C_TEXT2};font-size:11px;background:transparent;")
         al.addWidget(th_desc)
         self._app_status = QLabel("")
@@ -4835,7 +4885,8 @@ class SystemPage(QWidget):
 
     def _on_theme(self, idx):
         """Save theme and restart dashboard so all colours rebuild correctly."""
-        name = "dark" if idx == 0 else "light"
+        names = ["dark", "dark_dimmed", "oled_black", "light"]
+        name = names[idx] if idx < len(names) else "dark"
         self._app_cfg["theme"] = name
         save_app_config(self._app_cfg)
         self._app_status.setText("✓ Restarting to apply theme…")
@@ -6178,23 +6229,46 @@ class AboutPage(QWidget):
         self._build()
 
     def _build(self):
-        root = QVBoxLayout(self); root.setContentsMargins(16,16,16,16); root.setSpacing(10)
-        card, lay = make_card("About Legion Linux Toolkit")
+        root = QVBoxLayout(self); root.setContentsMargins(24,24,24,24); root.setSpacing(12)
+        card, lay = make_card()
+
+        # Header section with logo and title
+        header_w = QWidget()
+        header_w.setStyleSheet("background:transparent;")
+        header_l = QVBoxLayout(header_w)
+        header_l.setContentsMargins(0,0,0,8)
+        header_l.setSpacing(8)
+        header_l.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         from PyQt6.QtGui import QPixmap as _QP
         import base64 as _b64
         pm = _QP(); pm.loadFromData(_b64.b64decode(_LEGION_ICON_B64))
         logo = QLabel(); logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        logo.setPixmap(pm.scaled(56, 68, Qt.AspectRatioMode.KeepAspectRatio,
+        logo.setPixmap(pm.scaled(64, 78, Qt.AspectRatioMode.KeepAspectRatio,
                                  Qt.TransformationMode.SmoothTransformation))
-        logo.setStyleSheet("background:transparent;padding:8px 0;")
-        lay.addWidget(logo)
+        logo.setStyleSheet("background:transparent;")
+        header_l.addWidget(logo)
 
-        # ── Read system info dynamically ────────────────────────────────────
+        title = QLabel("Legion Linux Toolkit")
+        title.setStyleSheet(f"color:{C_TEXT};font-size:22px;font-weight:700;background:transparent;")
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        header_l.addWidget(title)
+
+        ver = QLabel("v0.6.2 · BETA 20260419")
+        ver.setStyleSheet(f"color:{C_TEXT2};font-size:12px;font-weight:500;background:transparent;")
+        ver.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        header_l.addWidget(ver)
+
+        div = QFrame(); div.setFrameShape(QFrame.Shape.HLine); div.setFixedHeight(1)
+        div.setStyleSheet(f"background:{C_BORDER};border:none;")
+        header_l.addWidget(div)
+
+        lay.addWidget(header_w)
+
+        # Read system info dynamically
         brand = HW.get("brand", "unknown").upper() if HW else _dmi("product_family").upper() or "LENOVO"
         model = HW.get("model", _dmi("product_name")) if HW else _dmi("product_name") or "Unknown"
 
-        # CPU — read from /proc/cpuinfo
         cpu_name = "Unknown"
         try:
             for line in Path("/proc/cpuinfo").read_text().splitlines():
@@ -6203,7 +6277,6 @@ class AboutPage(QWidget):
                     break
         except: pass
 
-        # GPU — read from lspci, show all GPUs
         gpu_name = "Unknown"
         try:
             r = subprocess.run(["lspci"], capture_output=True, text=True, timeout=3)
@@ -6216,7 +6289,6 @@ class AboutPage(QWidget):
             gpu_name = " + ".join(gpus) if gpus else "Unknown"
         except: pass
 
-        # OS — read from /etc/os-release
         os_name = "Linux"
         try:
             for line in Path("/etc/os-release").read_text().splitlines():
@@ -6225,13 +6297,11 @@ class AboutPage(QWidget):
                     break
         except: pass
 
-        # Desktop
         desktop = os.environ.get("XDG_CURRENT_DESKTOP", "") or \
                   os.environ.get("DESKTOP_SESSION", "Unknown")
         wayland = "Wayland" if os.environ.get("WAYLAND_DISPLAY") else "X11"
         desktop_str = f"{desktop} ({wayland})" if desktop else wayland
 
-        # Driver — check which modules are loaded
         drivers = []
         try:
             mods = subprocess.run(["lsmod"], capture_output=True, text=True, timeout=3).stdout
@@ -6241,9 +6311,10 @@ class AboutPage(QWidget):
         except: pass
         driver_str = " + ".join(drivers) if drivers else "ideapad_acpi"
 
-        for label, value in [
-            ("App",     "Legion Linux Toolkit"),
-            ("Version", "v0.6.2 - BETA 20260419"),
+        info_grid = QGridLayout()
+        info_grid.setSpacing(8)
+        info_grid.setContentsMargins(0,8,0,0)
+        rows = [
             ("Brand",   brand),
             ("Model",   model),
             ("CPU",     cpu_name),
@@ -6251,11 +6322,25 @@ class AboutPage(QWidget):
             ("OS",      os_name),
             ("Desktop", desktop_str),
             ("Driver",  driver_str),
-            ("Profiles","platform_profile (ACPI)"),
             ("Config",  "~/.config/legion-toolkit/"),
             ("GitHub",  "github.com/v4cachy/legion-linux-toolkit"),
-        ]:
-            lay.addWidget(InfoRow(label, value))
+        ]
+        for i, (label, value) in enumerate(rows):
+            lbl = QLabel(label)
+            lbl.setStyleSheet(f"color:{C_TEXT2};font-size:12px;font-weight:500;background:transparent;")
+            val = QLabel(value)
+            val.setStyleSheet(f"color:{C_TEXT};font-size:12px;font-weight:500;background:transparent;")
+            val.setWordWrap(True)
+            info_grid.addWidget(lbl, i, 0)
+            info_grid.addWidget(val, i, 1)
+        info_grid.setColumnStretch(0, 0)
+        info_grid.setColumnMinimumWidth(0, 80)
+        info_grid.setColumnStretch(1, 1)
+
+        lay.addWidget(QLabel("System Information"))
+        lay.addWidget(QWidget())
+        lay.addLayout(info_grid)
+
         root.addWidget(card); root.addStretch()
 
     def refresh(self, d=None): pass
@@ -6286,58 +6371,106 @@ class LegionDashboard(QMainWindow):
         self.setStyleSheet(
             f"QMainWindow{{background:{C_BG};}}"
             f"QToolTip{{background:{C_CARD2};color:{C_TEXT};border:1px solid {C_BORDER};"
-            f"padding:8px;font-size:12px;border-radius:4px;}}"
-            f"QScrollBar:vertical{{background:{C_BG};width:6px;border-radius:3px;}}"
-            f"QScrollBar::handle:vertical{{background:{C_BORDER};border-radius:3px;min-height:30px;}}"
+            f"padding:8px;font-size:12px;border-radius:6px;}}"
+            f"QScrollBar:vertical{{background:{C_BG};width:8px;border-radius:4px;}}"
+            f"QScrollBar::handle:vertical{{background:{C_TEXT3};border-radius:4px;min-height:40px;}}"
+            f"QScrollBar::handle:vertical:hover{{background:{C_TEXT2};}}"
             f"QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical{{height:0;}}"
+            f"QScrollBar::add-page:vertical,QScrollBar::sub-page:vertical{{background:transparent;}}"
+            f"QSlider::groove:horizontal{{background:{C_BORDER};height:6px;border-radius:3px;}}"
+            f"QSlider::sub-page:horizontal{{background:{C_ACCENT};border-radius:3px;}}"
+            f"QSlider::handle:horizontal{{background:{C_ACCENT};width:18px;height:18px;"
+            f"border-radius:9px;margin:-6px 0;}}"
+            f"QSlider::handle:horizontal:hover{{background:{C_TEXT};}}"
+            f"QPushButton{{background:{C_CARD2};color:{C_TEXT};border:1px solid {C_BORDER};"
+            f"border-radius:8px;padding:8px 18px;font-size:13px;font-weight:500;}}"
+            f"QPushButton:hover{{background:{C_ACCENT};color:#fff;border-color:{C_ACCENT};}}"
+            f"QComboBox{{background:{C_CARD2};color:{C_TEXT};border:1px solid {C_BORDER};"
+            f"border-radius:8px;padding:8px 14px;font-size:13px;}}"
+            f"QComboBox::drop-down{{border:none;width:24px;}}"
+            f"QComboBox QAbstractItemView{{background:{C_CARD2};color:{C_TEXT};"
+            f"border:1px solid {C_BORDER};selection-background-color:{C_ACCENT};selection-color:#fff;"
+            f"padding:4px;}}"
+            f"QSpinBox,QDoubleSpinBox{{background:{C_CARD2};color:{C_TEXT};"
+            f"border:1px solid {C_BORDER};border-radius:8px;padding:6px 10px;font-size:13px;}}"
+            f"QLineEdit{{background:{C_CARD2};color:{C_TEXT};border:1px solid {C_BORDER};"
+            f"border-radius:8px;padding:8px 12px;font-size:13px;selection-background-color:{C_ACCENT};}}"
         )
         rw = QWidget(); self.setCentralWidget(rw)
         main = QHBoxLayout(rw); main.setContentsMargins(0,0,0,0); main.setSpacing(0)
 
-        # Sidebar
-        sb = QWidget(); sb.setFixedWidth(96)
+        # Sidebar — wider, LLT-style
+        sb = QWidget(); sb.setFixedWidth(220)
         sb.setStyleSheet(f"background:{C_SIDEBAR};border-right:1px solid {C_BORDER};")
-        sbl = QVBoxLayout(sb); sbl.setContentsMargins(0,10,0,10); sbl.setSpacing(0)
+        sbl = QVBoxLayout(sb); sbl.setContentsMargins(0,0,0,0); sbl.setSpacing(0)
 
-        # Logo at top of sidebar
+        # Top bar with logo and title
+        top_logo = QWidget()
+        top_logo.setFixedHeight(64)
+        top_logo.setStyleSheet(f"background:{C_SIDEBAR};border-bottom:1px solid {C_BORDER};")
+        top_logo_lay = QHBoxLayout(top_logo)
+        top_logo_lay.setContentsMargins(16,10,16,10)
+        top_logo_lay.setSpacing(10)
+
         import base64 as _b64
         from PyQt6.QtGui import QPixmap as _QP2
         _pm2 = _QP2(); _pm2.loadFromData(_b64.b64decode(_LEGION_ICON_B64))
-        sidebar_logo = QLabel()
-        sidebar_logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        sidebar_logo.setPixmap(_pm2.scaled(36, 44, Qt.AspectRatioMode.KeepAspectRatio,
-                                           Qt.TransformationMode.SmoothTransformation))
-        sidebar_logo.setFixedHeight(52)
-        sidebar_logo.setStyleSheet("background:transparent;")
-        sbl.addWidget(sidebar_logo)
+        logo_lbl = QLabel()
+        logo_lbl.setPixmap(_pm2.scaled(28, 34, Qt.AspectRatioMode.KeepAspectRatio,
+                                       Qt.TransformationMode.SmoothTransformation))
+        logo_lbl.setStyleSheet("background:transparent;")
+        logo_lbl.setFixedSize(32, 38)
 
-        dv = QFrame(); dv.setFixedHeight(1)
-        dv.setStyleSheet(f"background:{C_BORDER};margin:2px 10px;")
-        sbl.addWidget(dv); sbl.addSpacing(4)
+        title_lbl = QLabel("Legion Toolkit")
+        title_lbl.setStyleSheet(f"color:{C_TEXT};font-size:15px;font-weight:700;background:transparent;")
 
+        top_logo_lay.addWidget(logo_lbl, alignment=Qt.AlignmentFlag.AlignVCenter)
+        top_logo_lay.addWidget(title_lbl, alignment=Qt.AlignmentFlag.AlignVCenter)
+        top_logo_lay.addStretch()
+        sbl.addWidget(top_logo)
+
+        # Nav buttons
         self.nav_btns = []
-        nav = [("🏠","Home"),("🔋","Battery"),("⚡","Perform."),
+        nav = [("🏠","Home"),("🔋","Battery"),("⚡","Performance"),
                ("🖥️","Display"),("⌨️","Keyboard"),("⚙️","System"),
-               ("🚀","OC"),("🌀","Fan"),("🎯","Actions"),("ℹ️","About")]
+               ("🚀","Overclock"),("🌀","Fan Control"),("🎯","Actions"),("ℹ️","About")]
+        nav_area = QWidget()
+        nav_area.setStyleSheet(f"background:{C_SIDEBAR};")
+        nav_area_lay = QVBoxLayout(nav_area)
+        nav_area_lay.setContentsMargins(8,8,8,8)
+        nav_area_lay.setSpacing(4)
+
         for icon, label in nav:
             btn = SidebarBtn(icon, label)
             btn.clicked.connect(lambda chk, i=len(self.nav_btns): self._switch(i))
-            self.nav_btns.append(btn); sbl.addWidget(btn)
-        sbl.addStretch(); main.addWidget(sb)
+            self.nav_btns.append(btn)
+            nav_area_lay.addWidget(btn)
+        nav_area_lay.addStretch()
+        sbl.addWidget(nav_area)
 
-        # Right
+        # Bottom section with theme toggle
+        bottom_area = QWidget()
+        bottom_area.setStyleSheet(f"background:{C_SIDEBAR};border-top:1px solid {C_BORDER};")
+        bottom_lay = QVBoxLayout(bottom_area)
+        bottom_lay.setContentsMargins(8,8,8,8)
+        bottom_lay.setSpacing(4)
+        bottom_lay.addStretch()
+        sbl.addWidget(bottom_area)
+        main.addWidget(sb)
+
+        # Right side
         right = QVBoxLayout(); right.setContentsMargins(0,0,0,0); right.setSpacing(0)
-        topbar = QWidget(); topbar.setFixedHeight(56)
+        topbar = QWidget(); topbar.setFixedHeight(60)
         topbar.setStyleSheet(
-            f"background:{C_SIDEBAR};"
+            f"background:{C_BG};"
             f"border-bottom:1px solid {C_BORDER};"
         )
-        tbl = QHBoxLayout(topbar); tbl.setContentsMargins(20,0,20,0); tbl.setSpacing(0)
+        tbl = QHBoxLayout(topbar); tbl.setContentsMargins(28,0,28,0); tbl.setSpacing(12)
 
         # Page title
         self.page_title = QLabel("Home")
         self.page_title.setStyleSheet(
-            f"color:{C_TEXT};font-size:16px;font-weight:bold;letter-spacing:0.5px;")
+            f"color:{C_TEXT};font-size:20px;font-weight:700;letter-spacing:0px;")
         tbl.addWidget(self.page_title)
         tbl.addStretch()
 
@@ -6356,7 +6489,6 @@ class LegionDashboard(QMainWindow):
             DisplayPage(), KeyboardPage(), SystemPage(),
             OverclockPage(), FanPage(), ActionsPage(), AboutPage()
         ]
-        # Wire battery sync — Home combo updates Battery page toggles and vice versa
         self.home_page._sync_battery_cb = self.pages[1].sync_charging
         self.pages[1]._sync_home_cb = self._sync_bat_combo
         for pg in self.pages: self.stack.addWidget(pg)
