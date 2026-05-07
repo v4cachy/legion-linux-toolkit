@@ -59,29 +59,8 @@ PLATFORM_PROFILE_CHOICES= Path("/sys/firmware/acpi/platform_profile_choices")
 _POWERMODE_MAP = {1: "quiet", 2: "balanced", 3: "performance", 255: "custom"}
 _POWERMODE_MAP_REV = {"quiet": 1, "balanced": 2, "performance": 3, "custom": 255}
 
-def _find_legion_powermode() -> Path:
-    """Find the LLL powermode sysfs file dynamically."""
-    try:
-        for p in Path("/sys/devices").glob("pci*/*/*/PNP0C09:*"):
-            f = p / "powermode"
-            if f.exists(): return f
-    except: pass
-    try:
-        for p in Path("/sys/devices").glob("pci*/*/*/VPC2004:*"):
-            f = p / "powermode"
-            if f.exists(): return f
-    except: pass
-    for base in [Path("/sys/bus/platform/drivers/legion"),
-                 Path("/sys/module/legion_laptop/drivers/platform:legion")]:
-        if base.exists():
-            try:
-                for d in base.iterdir():
-                    f = d / "powermode"
-                    if f.exists(): return f
-            except: pass
-    return Path("/tmp/nonexistent_powermode")
-
-LEGION_POWERMODE = _find_legion_powermode()
+LEGION_SYS_BASEPATH = Path("/sys/module/legion_laptop/drivers/platform:legion/legion")
+LEGION_POWERMODE    = LEGION_SYS_BASEPATH / "powermode"
 
 def _read_lll_powermode() -> str:
     """Read power mode directly from LLL driver (reliable on kernel 7.x)."""

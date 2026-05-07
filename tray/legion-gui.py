@@ -44,24 +44,8 @@ from PyQt6.QtGui import QColor, QPainter, QPen, QBrush, QFont, QCursor
 PLATFORM_PROFILE  = Path("/sys/firmware/acpi/platform_profile")
 _POWERMODE_MAP = {1: "quiet", 2: "balanced", 3: "performance", 255: "custom"}
 
-def _find_legion_powermode() -> Path:
-    for pattern in ["pci*/*/*/PNP0C09:*", "pci*/*/*/VPC2004:*"]:
-        try:
-            for p in Path("/sys/devices").glob(pattern):
-                f = p / "powermode"
-                if f.exists(): return f
-        except: pass
-    for base in [Path("/sys/bus/platform/drivers/legion"),
-                 Path("/sys/module/legion_laptop/drivers/platform:legion")]:
-        if base.exists():
-            try:
-                for d in base.iterdir():
-                    f = d / "powermode"
-                    if f.exists(): return f
-            except: pass
-    return Path("/tmp/nonexistent_powermode")
-
-LEGION_POWERMODE = _find_legion_powermode()
+LEGION_SYS_BASEPATH = Path("/sys/module/legion_laptop/drivers/platform:legion/legion")
+LEGION_POWERMODE    = LEGION_SYS_BASEPATH / "powermode"
 
 def _read_powermode() -> str:
     try:
@@ -163,55 +147,27 @@ IDEAPAD_BASE      = (lambda: next(
 ) if Path("/sys/bus/platform/drivers/ideapad_acpi").exists()
   else Path("/sys/bus/platform/drivers/ideapad_acpi/VPC2004:00"))()
 
-# LEGION_SYS_BASEPATH — find LLL device path (supports PNP0C09 and VPC2004 for kernel 7.x)
-def _find_legion_base() -> Path:
-    base = Path("/sys/module/legion_laptop/drivers/platform:legion")
-    if base.exists():
-        for d in base.iterdir():
-            if (d.name.startswith("PNP0C09") or d.name.startswith("VPC2004")) and (d / "hwmon").exists():
-                return d
-    # Fallback: scan all PCI buses for either device ID
-    try:
-        for p in Path("/sys/devices").glob("pci*/*/*/*"):
-            if (p.name.startswith("PNP0C09") or p.name.startswith("VPC2004")) and (p / "hwmon").exists():
-                return p
-    except: pass
-    return Path("/sys/devices/pci0000:00/0000:00:14.3/PNP0C09:00")
+LEGION_SYS_BASEPATH = LEGION_SYS_BASEPATH  # from line 47
 
-LEGION_SYS_BASEPATH = _find_legion_base()
-
-# G-Sync — find dynamically (PNP0C09 or VPC2004 for kernel 7.x)
-def _find_gsync_path() -> Path:
-    for pattern in ["*/PNP0C09:*/gsync", "*/VPC2004:*/gsync"]:
-        try:
-            for p in Path("/sys/devices").glob(pattern):
-                return p.parent / "gsync"
-        except: pass
-    return Path("/sys/devices/pci0000:00/0000:00:14.3/PNP0C09:00/gsync")
-
-_GSYNC_PATH = _find_gsync_path()
+# G-Sync — use the LLL device path
+_GSYNC_PATH  = LEGION_SYS_BASEPATH / "gsync"
 
 CONSERVATION_MODE = _find_ideapad("conservation_mode") or IDEAPAD_BASE / "conservation_mode"
 CAMERA_POWER      = _find_ideapad("camera_power")      or IDEAPAD_BASE / "camera_power"
 FN_LOCK           = _find_ideapad("fn_lock")            or IDEAPAD_BASE / "fn_lock"
 USB_CHARGING      = _find_ideapad("usb_charging")       or IDEAPAD_BASE / "usb_charging"
 
-TOUCHPAD          = _find_feature("touchpad")           or Path("/sys/bus/platform/drivers/ideapad_acpi/VPC2004:00/touchpad")
-RAPID_CHARGE      = _find_feature("rapidcharge")        or Path("/sys/bus/platform/drivers/ideapad_acpi/VPC2004:00/rapidcharge")
-WINKEY            = _find_feature("winkey")             or Path("/tmp/nonexistent_winkey")
-OVERDRIVE         = _find_feature("overdrive")          or Path("/tmp/nonexistent_overdrive")
-GSYNC             = _find_gsync_path()
+TOUCHPAD          = LEGION_SYS_BASEPATH / "touchpad"
+RAPID_CHARGE      = LEGION_SYS_BASEPATH / "rapidcharge"
+WINKEY            = LEGION_SYS_BASEPATH / "winkey"
+OVERDRIVE         = LEGION_SYS_BASEPATH / "overdrive"
+GSYNC             = _GSYNC_PATH
 NVIDIA_BACKLIGHT = Path("/sys/class/backlight/nvidia_wmi_ec_backlight/brightness")
-POWER_CHARGE_MODE = _find_feature("powerchargemode")    or Path("/tmp/nonexistent_pcm")
-THERMAL_MODE      = _find_feature("thermalmode")        or Path("/tmp/nonexistent_thermalmode")
-FAN_FULLSPEED     = _find_feature("fan_fullspeed")      or Path("/tmp/nonexistent_fan_fullspeed")
+POWER_CHARGE_MODE = LEGION_SYS_BASEPATH / "powerchargemode"
+THERMAL_MODE      = LEGION_SYS_BASEPATH / "thermalmode"
+FAN_FULLSPEED     = LEGION_SYS_BASEPATH / "fan_fullspeed"
 
-# LEGION_BASE — find the legion device directory (PNP0C09 or VPC2004 for kernel 7.x, any PCI slot)
-LEGION_BASE = (lambda: next(
-    (p for p in list(Path("/sys/devices").glob("pci*/*/*/PNP0C09:*")) + list(Path("/sys/devices").glob("pci*/*/*/VPC2004:*"))
-     if (p / "fan_fullspeed").exists() or (p / "overdrive").exists()),
-    Path("/sys/devices/pci0000:00/0000:00:14.3/PNP0C09:00")
-))()
+LEGION_BASE = LEGION_SYS_BASEPATH
 
 def get_gsync_status() -> bool:
     """Check if G-Sync (hybrid mode) is enabled."""
@@ -1016,7 +972,7 @@ def find_hwmon(name):
 
 # ── LLL (LenovoLegionLinux) Integration ───────────────────────────────────────────────
 LLL_FANCURVE_DEBUGFS = Path("/sys/kernel/debug/legion/fancurve")
-FAN_FULLSPEED = _find_feature("fan_fullspeed") or Path("/tmp/nonexistent_fan_fullspeed")
+FAN_FULLSPEED = LEGION_SYS_BASEPATH / "fan_fullspeed"
 
 def is_lll_module_loaded() -> bool:
     """Check if LLL kernel module is loaded."""

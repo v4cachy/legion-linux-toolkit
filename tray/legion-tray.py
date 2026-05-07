@@ -37,34 +37,9 @@ GUI_BIN           = Path("/usr/lib/legion-toolkit/legion-gui.py")
 IDEAPAD_BASE      = Path("/sys/bus/platform/drivers/ideapad_acpi/VPC2004:00")
 _POWERMODE_MAP = {1: "quiet", 2: "balanced", 3: "performance", 255: "custom"}
 
-def _find_legion_base() -> Path:
-    for pattern in ["pci*/*/*/PNP0C09:*", "pci*/*/*/VPC2004:*"]:
-        try:
-            for p in Path("/sys/devices").glob(pattern):
-                if (p / "hwmon").exists() or (p / "fan_fullspeed").exists():
-                    return p
-        except: pass
-    return Path("/sys/devices/pci0000:00/0000:00:14.3/PNP0C09:00")
-
-def _find_legion_powermode() -> Path:
-    for pattern in ["pci*/*/*/PNP0C09:*", "pci*/*/*/VPC2004:*"]:
-        try:
-            for p in Path("/sys/devices").glob(pattern):
-                f = p / "powermode"
-                if f.exists(): return f
-        except: pass
-    for base in [Path("/sys/bus/platform/drivers/legion"),
-                 Path("/sys/module/legion_laptop/drivers/platform:legion")]:
-        if base.exists():
-            try:
-                for d in base.iterdir():
-                    f = d / "powermode"
-                    if f.exists(): return f
-            except: pass
-    return Path("/tmp/nonexistent_powermode")
-
-LEGION_POWERMODE  = _find_legion_powermode()
-LEGION_BASE       = _find_legion_base()
+LEGION_SYS_BASEPATH = Path("/sys/module/legion_laptop/drivers/platform:legion/legion")
+LEGION_POWERMODE    = LEGION_SYS_BASEPATH / "powermode"
+LEGION_BASE         = LEGION_SYS_BASEPATH
 
 def _read_powermode() -> str:
     try:
